@@ -149,8 +149,8 @@ Create a one-time-use password reset token that allows a user to change their ``
 - URL path: ``/user/password/reset``
 - Method: ``POST``
 - Handler: [create_otp](https://docs.rs/restapi/1.0.2/restapi/requests/user/create_otp/fn.create_otp.html)
-- Request: [ApiReqUserCreateOtp](https://docs.rs/restapi/1.0.2/restapi/requests/user/consume_user_otp/struct.ApiReqUserCreateOtp.html)
-- Response: [ApiResUserCreateOtp](https://docs.rs/restapi/1.0.2/restapi/requests/user/consume_user_otp/struct.ApiResUserCreateOtp.html)
+- Request: [ApiReqUserCreateOtp](https://docs.rs/restapi/1.0.2/restapi/requests/user/create_otp/struct.ApiReqUserCreateOtp.html)
+- Response: [ApiResUserCreateOtp](https://docs.rs/restapi/1.0.2/restapi/requests/user/create_otp/struct.ApiResUserCreateOtp.html)
 
 #### Consume a One-Time-Use Password Reset Token (OTP)
 
@@ -159,8 +159,8 @@ Consume a one-time-use password and change the user's ``users.password`` value t
 - URL path: ``/user/password/change``
 - Method: ``POST``
 - Handler: [consume_user_otp](https://docs.rs/restapi/1.0.2/restapi/requests/user/consume_user_otp/fn.consume_user_otp.html)
-- Request: [ApiReqUserConsumeOtp](https://docs.rs/restapi/1.0.2/restapi/requests/user/create_otp/struct.ApiReqUserConsumeOtp.html)
-- Response: [ApiResUserConsumeOtp](https://docs.rs/restapi/1.0.2/restapi/requests/user/create_otp/struct.ApiResUserConsumeOtp.html)
+- Request: [ApiReqUserConsumeOtp](https://docs.rs/restapi/1.0.2/restapi/requests/user/consume_user_otp/struct.ApiReqUserConsumeOtp.html)
+- Response: [ApiResUserConsumeOtp](https://docs.rs/restapi/1.0.2/restapi/requests/user/consume_user_otp/struct.ApiResUserConsumeOtp.html)
 
 #### Verify a User's email
 
