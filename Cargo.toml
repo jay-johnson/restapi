@@ -5,8 +5,12 @@ version = "1.0.2"
 edition = "2021"
 license = "MIT"
 authors = [
-    "jayphjohnson@gmail.com"
+    "Jay Johnson <jayphjohnson@gmail.com>"
 ]
+homepage = "https://docs.rs/restapi/latest/restapi/"
+documentation = "https://docs.rs/restapi"
+repository = "https://github.com/jay-johnson/restapi"
+
 categories = [
     "asynchronous",
     "database",
@@ -24,6 +28,7 @@ keywords = [
 exclude = [
     "docker/*",
     "notes/*",
+    "target/*",
 ]
 
 [dependencies]
