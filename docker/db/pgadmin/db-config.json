@@ -1,0 +1,23 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Fully Defined Server",
+      "Group": "Server Group 2",
+      "HostAddr": "0.0.0.0",
+      "Port": 5432,
+      "MaintenanceDB": "postgres",
+      "Username": "postgres",
+      "SSLMode": "require",
+      "Comment": "This server has every option configured in the JSON",
+      "SSLCert": "/etc/tls/postgres.crt",
+      "SSLKey": "/etc/tls/postgres.key",
+      "SSLRootCert": "/etc/tls/postgres-ca.pem",
+      "SSLCompression": 1,
+      "Shared": false,
+      "BGColor": "#ff9900",
+      "FGColor": "#000000",
+      "Service": "postgresql-14",
+      "Timeout": 60
+    }
+  }
+}

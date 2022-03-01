@@ -1,0 +1,67 @@
+version: "2"
+
+services:
+
+  # validate tls is working with:
+  # openssl s_client -connect 0.0.0.0:5432 -starttls postgres
+  # psql --set=sslmode=require -h 0.0.0.0 -p 5432 -U postgres -d mydb
+  postgres:
+    container_name: postgres
+    image: localbuild/postgres14
+    hostname: postgres
+    # network_mode: host
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+    # - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    # - ./sql/ssl.sql:/docker-entrypoint-initdb.d/ssl.sql
+    # - ./sql/sql_setup.sh:/docker-entrypoint-initdb.d/sql_setup.sh
+    - ./data-postgres:/var/lib/postgresql/data
+    - ./etc/localtime_us_eastern:/etc/localtime
+    - ./etc/timezone_us_eastern:/etc/timezone
+    ports:
+    - "5432:5432"
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    hostname: pgadmin
+    environment:
+    - SERVER_MODE=True
+    - DEFAULT_SERVER_PORT=5050
+    - DEFAULT_SERVER_HOST=0.0.0.0
+    - POSTGRES_HOSTNAME=postgres
+    - POSTGRES_PORT=5432
+    # login creds
+    # https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html#examples
+    - PGADMIN_SETUP_EMAIL=user@domain.com
+    - PGADMIN_SETUP_PASSWORD=123321
+    - PGADMIN_DEFAULT_EMAIL=user@domain.com
+    - PGADMIN_DEFAULT_PASSWORD=123321
+    - SESSION_DB_PATH=/pgadmin-sessions
+    # tls
+    - "PGADMIN_ENABLE_TLS=True"
+    ports:
+    - "5433:443"
+    volumes:
+    # requires running as due to the sessions ACL errors
+    # https://github.com/helm/charts/issues/19690
+    # https://stackoverflow.com/questions/64781245/permission-denied-var-lib-pgadmin-sessions-in-docker
+    # user: root
+    # to write sessions outside the container
+    - ./data-pgadmin:/pgadmin-sessions
+    - ./pgadmin/db-config.json:/db-config.json
+    - ./etc/localtime_us_eastern:/etc/localtime
+    - ./etc/timezone_us_eastern:/etc/timezone
+    # requires building the certs locally with:
+    # ./docker/db/build-postgres.sh
+    #
+    # pgadmin tls assets
+    - ../../certs/tls/pgadmin/pgadmin.key:/certs/server.key:ro
+    - ../../certs/tls/pgadmin/pgadmin.crt:/certs/server.cert:ro
+    # db tls assets for v1 - not a valid client key/cert
+    - ../../certs/tls/postgres/postgres.key:/etc/tls/postgres.key:ro
+    - ../../certs/tls/postgres/postgres.crt:/etc/tls/postgres.crt:ro
+    - ../../certs/tls/postgres/postgres-ca.pem:/etc/tls/postgres-ca.pem:ro

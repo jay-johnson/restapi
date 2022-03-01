@@ -1,0 +1,57 @@
+[package]
+name = "restapi"
+description = "A secure-by-default rest api stack implemented with hyper, tokio and postgres. This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed. Comes with a working user management and authentication backend written in postgresql. For ease of use, you can browse the database using pg4admin for database management (deployed with docker compose)."
+version = "1.0.2"
+edition = "2021"
+license = "MIT"
+authors = [
+    "jayphjohnson@gmail.com"
+]
+categories = [
+    "asynchronous",
+    "database",
+    "web-programming",
+    "web-programming::http-server",
+    "authentication"
+]
+keywords = [
+    "rest_api",
+    "secure_by_default",
+    "encryption",
+    "hyper",
+    "tokio"
+]
+exclude = [
+    "docker/*",
+    "notes/*",
+]
+
+[dependencies]
+bb8 = { version = "0.7.1" }
+bb8-postgres = { version = "0.7.0" }
+chrono = { version = "^0.4" }
+futures = { version = "^0.3.19" }
+hyper = { version = "^0.14.16", features = [ "http1", "http2", "server", "stream", "runtime" ] }
+jsonwebtoken = { version = "^7.2.0" }
+log = { version = "^0.4.0" }
+native-tls = { version = "^0.2.8" }
+postgres = { version = "^0.19.2", features = [ "with-geo-types-0_7", "array-impls", "with-chrono-0_4", "with-bit-vec-0_6", "with-serde_json-1", "with-eui48-1", "with-uuid-0_8", "with-time-0_3" ] }
+postgres-native-tls = { version = "^0.5.0" }
+pretty_env_logger = { version = "^0.4.0" }
+rusoto_s3 = { version = "^0.46.0" }
+rusoto_core = { version = "^0.46.0" }
+rust-argon2 = { version = "^1.0.0" }
+rustls = { version = "^0.20.2", features = [ "tls12", "quic" ] }
+rustls-pemfile = { version = "^0.2.1" }
+serde = { version = "^1.0.135", features = ["derive"] }
+serde_json = { version = "^1.0.78" }
+tokio = { version = "^1.15.0", features = [ "rt-multi-thread", "macros" ] }
+tokio-postgres = { version = "^0.7.5", features = ["with-uuid-0_8", "with-chrono-0_4", "with-serde_json-1", "runtime"] }
+tokio-rustls = { version = "^0.23.2" }
+tokio-test = { version = "^0.4.2" }
+url = { version = "2.2.2" }
+uuid = { version = "^0.8.2", features = ["serde", "v4", "v5"] }
+
+[lib]
+name = "restapi"
+path = "src/lib.rs"

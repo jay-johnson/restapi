@@ -1,0 +1,6 @@
+*.crt
+*.ca
+*.pem
+*.key
+*.pkcs12
+*.pkcs8
