@@ -4,7 +4,7 @@ This is for quickly building tls assets for this demo, it's not for production. 
 
 1.  Set up tls config
 
-    [./configs/certs.yaml](./configs/certs.yaml)
+    [./configs/dev-network.yml](./configs/dev-network.yml)
 
 1.  Generate tls server certificate, server key, certificate authority
 
