@@ -402,7 +402,7 @@
 //! export TOKEN_EXPIRATION_SECONDS_INTO_FUTURE=86400;
 //! ```
 //!
-//! #### Token Encryption Keys
+//! #### JWT Signing Keys
 //!
 //! ```bash
 //! export TOKEN_ALGO_KEY_DIR="./jwt"
