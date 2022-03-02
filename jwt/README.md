@@ -2,11 +2,7 @@
 
 The default algorithm the jsonwebtokens crate is using is ``ECDSA`` with ``SHA-256``.
 
-Here's some more information on why:
-
-[HMAC vs ECDSA for jwt](https://crypto.stackexchange.com/questions/30657/hmac-vs-ecdsa-for-jwt)
-
-### Generate new ECDSA with SHA-256 public and private keys
+### Generate new ECDSA with SHA-256 public and private signing keys
 
 ```bash
 openssl ecparam -name prime256v1 -genkey -out private-key.pem
