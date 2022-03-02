@@ -15,7 +15,7 @@ use serde::Deserialize;
 ///
 /// `users_verify`
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `id` - `i32` - verification db record id
 /// * `user_id` - `i32` - user id

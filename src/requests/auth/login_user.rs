@@ -48,7 +48,7 @@ use crate::requests::user::is_verification_required::is_verification_required;
 /// [`login_user`](crate::requests::auth::login_user::login_user)
 /// function.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `email` - `String` - unique user email
 /// * `password` - `String` - user password
@@ -76,7 +76,7 @@ pub struct ApiReqUserLogin {
 /// hyper [`Response`](hyper::Response)
 /// sent back to the client.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `user_id` - `i32` - existing user id
 /// * `email` - `String` - unique user email

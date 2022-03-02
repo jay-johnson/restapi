@@ -53,7 +53,7 @@ use crate::requests::auth::validate_user_token::validate_user_token;
 /// [`delete_user`](crate::requests::user::delete_user::delete_user)
 /// function.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `user_id` - `i32` - user id
 /// * `email` - `String` - user email
@@ -82,7 +82,7 @@ pub struct ApiReqUserDelete {
 /// hyper [`Response`](hyper::Response)
 /// sent back to the client.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `user_id` - `i32` - user id
 /// * `email` - `String` - user email

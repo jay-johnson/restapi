@@ -47,7 +47,7 @@ use crate::requests::models::user_data::ModelUserData;
 /// [`update_user_data`](crate::requests::user::update_user_data::update_user_data)
 /// function.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `user_id` - `i32` - user id
 /// * `data_id` - `i32` - `users_data.id` record to update
@@ -206,7 +206,7 @@ impl ApiReqUserUpdateData {
 /// hyper [`Response`](hyper::Response)
 /// sent back to the client.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `data` - [`ModelUserData`](crate::requests::models::user_data::ModelUserData) -
 ///   the newly-updated record from the `users_data` db table

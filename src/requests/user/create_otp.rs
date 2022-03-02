@@ -49,7 +49,7 @@ use crate::requests::auth::validate_user_token::validate_user_token;
 /// `create_otp`
 /// function.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `user_id` - `i32` - user id
 /// * `email` - `String` - user email
@@ -81,7 +81,7 @@ pub struct ApiReqUserCreateOtp {
 /// hyper [`Response`](hyper::Response)
 /// sent back to the client.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `user_id` - `i32` - user id
 /// * `token` - `String` - user's new one-time-use token to reset

@@ -54,7 +54,7 @@ use crate::requests::user::is_verification_enabled::is_verification_enabled;
 /// [`verify_user`](crate::requests::user::verify_user::verify_user)
 /// function.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `u` - `i32` - user id
 /// * `t` - `String` -  the
@@ -87,7 +87,7 @@ pub struct ApiReqUserVerify {
 /// hyper [`Response`](hyper::Response)
 /// sent back to the client.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `user_id` - `i32` - user id
 /// * `email` - `String` - user email

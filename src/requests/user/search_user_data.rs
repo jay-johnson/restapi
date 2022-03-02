@@ -48,7 +48,7 @@ use crate::requests::models::user_data::ModelUserData;
 /// [`search_user_data`](crate::requests::user::search_user_data::search_user_data)
 /// function.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `user_id` - `i32` - user id
 /// * `creator_user_id` - `Option<i32>` - filter by
@@ -235,7 +235,7 @@ impl ApiReqUserSearchData {
 /// hyper [`Response`](hyper::Response)
 /// sent back to the client.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `data` - Vec<[`ModelUserData`](crate::requests::models::user_data::ModelUserData)> -
 ///   list of matching `users_data` records

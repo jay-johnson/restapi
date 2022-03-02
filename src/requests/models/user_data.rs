@@ -12,7 +12,7 @@ use serde::Deserialize;
 ///
 /// `users_data`
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `user_id` - `i32` - user id in the db
 /// * `data_id` - `i32` - users_data.id in the db

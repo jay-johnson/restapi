@@ -51,7 +51,7 @@ use crate::requests::auth::validate_user_token::validate_user_token;
 /// [`consume_user_otp`](crate::requests::user::consume_user_otp::consume_user_otp]
 /// function.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `user_id` - `i32` - user id
 /// * `email` - `String` - user email
@@ -89,7 +89,7 @@ pub struct ApiReqUserConsumeOtp {
 /// hyper [`Response`](hyper::Response)
 /// sent back to the client.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `user_id` - `i32` - user id
 /// * `otp_id` - `i32` - users_otp primary db key id

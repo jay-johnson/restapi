@@ -1,27 +1,21 @@
 //! # Rust Rest API Stack with User Management
 //!
-//! A secure-by-default rest api stack implemented with hyper, tokio and postgres.
-//!
-//! This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed.
-//!
-//! Comes with a working user management and authentication backend written in postgresql.
-//!
-//! For ease of use, you can browse the database using pg4admin for database management (deployed with docker compose).
+//! A secure-by-default rest api stack implemented with hyper, tokio and postgres. This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed. Comes with a working user management and authentication backend written in postgresql. For ease of use, you can browse the database using pg4admin for database management (deployed with docker compose).
 //!
 //! ### Overview
 //!
 //! - User authentication enabled by default and implemented with custom tls assets to encrypt all JWT tokens with storage in postgres.
 //! - Users can upload and manage files stored on AWS S3 (assuming valid credentials are loaded outside this rust project).
 //! - User password reset and user email change support using one-time-use tokens that are stored in postgres.
-//! - User passwords are salted using argon2
+//! - User passwords are salted using [argon2](https://docs.rs/argon2/latest/argon2/).
 //! - The hyper server hosts tls assets that can be re-generated with the tools in this repository.
-//! - The postgres database requires clients present the included tls Certificate Authority file for encrypting data in-transit.
+//! - The postgres database requires each client include the postgres tls certificate authority file for encrypting data in-transit.
 //! - The rest api server accesses postgres with a bb8 client threadpool.
 //! - encrypted JWT keys included and documentation to build new ones as you need.
 //!
 //! ### TLS Encryption Status
 //!
-//! Compoment        | Status
+//! Component        | Status
 //! ---------------- | ------
 //! Rest API Server  | Listening for encrypted client connections on tcp port **3000**
 //! JWT              | Encrypting and decrypting tokens with [ECDSA using SHA-256](https://docs.rs/jsonwebtoken/latest/jsonwebtoken/enum.Algorithm.html#variant.ES256)

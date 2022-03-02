@@ -17,7 +17,7 @@ use serde::Deserialize;
 ///
 /// `users_otp`
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `id` - `i32` - `users_otp.id` in the db
 /// * `user_id` - `i32` - `users.id` in the db

@@ -47,7 +47,7 @@ use crate::requests::models::user::get_user_by_id;
 /// [`get_user`](crate::requests::user::get_user::get_user)
 /// function.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `user_id` - `i32` - user id
 ///
@@ -72,7 +72,7 @@ pub struct ApiReqUserGet {
 /// hyper [`Response`](hyper::Response)
 /// sent back to the client.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `user_id` - `i32` - user id
 /// * `email` - `String` - user email

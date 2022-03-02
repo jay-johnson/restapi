@@ -52,7 +52,7 @@ use crate::requests::user::upsert_user_verification::upsert_user_verification;
 /// [`create_user`](crate::requests::user::create_user::create_user)
 /// function.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `email` - `String` - user email
 /// * `password` - `String` - new user password
@@ -79,7 +79,7 @@ pub struct ApiReqUserCreate {
 /// hyper [`Response`](hyper::Response)
 /// sent back to the client.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `user_id` - `i32` - user id
 /// * `email` - `String` - user email

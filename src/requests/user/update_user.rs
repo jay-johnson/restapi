@@ -56,7 +56,7 @@ use crate::requests::user::upsert_user_verification::upsert_user_verification;
 /// [`update_user`](crate::requests::user::update_user::update_user)
 /// function.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `user_id` - `i32` - user id
 /// * `email` - `Option<String>` - change the
@@ -213,7 +213,7 @@ impl ApiReqUserUpdate {
 /// hyper [`Response`](hyper::Response)
 /// sent back to the client.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `user_id` - `i32` - user id
 /// * `email` - `String` - user email

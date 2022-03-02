@@ -1,27 +1,21 @@
 ## Rust Rest API Stack with User Management
 
-A secure-by-default rest api stack implemented with hyper, tokio and postgres.
-
-This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed.
-
-Comes with a working user management and authentication backend written in postgresql.
-
-For ease of use, you can browse the database using pg4admin for database management (deployed with docker compose).
+A secure-by-default rest api stack implemented with hyper, tokio and postgres. This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed. Comes with a working user management and authentication backend written in postgresql. For ease of use, you can browse the database using pg4admin for database management (deployed with docker compose).
 
 ### Overview
 
 - User authentication enabled by default and implemented with custom tls assets to encrypt all JWT tokens with storage in postgres.
 - Users can upload and manage files stored on AWS S3 (assuming valid credentials are loaded outside this rust project).
 - User password reset and user email change support using one-time-use tokens that are stored in postgres.
-- User passwords are salted using argon2
+- User passwords are salted using [argon2](https://docs.rs/argon2/latest/argon2/).
 - The hyper server hosts tls assets that can be re-generated with the tools in this repository.
-- The postgres database requires clients present the included tls Certificate Authority file for encrypting data in-transit.
+- The postgres database requires each client include the postgres tls certificate authority file for encrypting data in-transit.
 - The rest api server accesses postgres with a bb8 client threadpool.
 - encrypted JWT keys included and documentation to build new ones as you need.
 
 ### TLS Encryption Status
 
-Compoment        | Status
+Component        | Status
 ---------------- | ------
 Rest API Server  | Listening for encrypted client connections on tcp port **3000**
 JWT              | Encrypting and decrypting tokens with [ECDSA using SHA-256](https://docs.rs/jsonwebtoken/latest/jsonwebtoken/enum.Algorithm.html#variant.ES256)
@@ -98,9 +92,9 @@ Create a single ``users`` record for the new user
 
 - URL path: ``/user``
 - Method: ``POST``
-- Handler: [create_user](https://docs.rs/restapi/1.0.2/restapi/requests/user/create_user/fn.create_user.html)
-- Request: [ApiReqUserCreate](https://docs.rs/restapi/1.0.2/restapi/requests/user/create_user/struct.ApiReqUserCreate.html)
-- Response: [ApiResUserCreate](https://docs.rs/restapi/1.0.2/restapi/requests/user/create_user/struct.ApiResqUserCreate.html)
+- Handler: [create_user](https://docs.rs/restapi/latest/restapi/requests/user/create_user/fn.create_user.html)
+- Request: [ApiReqUserCreate](https://docs.rs/restapi/latest/restapi/requests/user/create_user/struct.ApiReqUserCreate.html)
+- Response: [ApiResUserCreate](https://docs.rs/restapi/latest/restapi/requests/user/create_user/struct.ApiResqUserCreate.html)
 
 #### Update User
 
@@ -108,9 +102,9 @@ Update supported ``users`` fields (including change user email and password)
 
 - URL path: ``/user``
 - Method: ``PUT``
-- Handler: [update_user](https://docs.rs/restapi/1.0.2/restapi/requests/user/update_user/fn.update_user.html)
-- Request: [ApiReqUserUpdate](https://docs.rs/restapi/1.0.2/restapi/requests/user/update_user/struct.ApiReqUserUpdate.html)
-- Response: [ApiResUserUpdate](https://docs.rs/restapi/1.0.2/restapi/requests/user/update_user/struct.ApiResqUserUpdate.html)
+- Handler: [update_user](https://docs.rs/restapi/latest/restapi/requests/user/update_user/fn.update_user.html)
+- Request: [ApiReqUserUpdate](https://docs.rs/restapi/latest/restapi/requests/user/update_user/struct.ApiReqUserUpdate.html)
+- Response: [ApiResUserUpdate](https://docs.rs/restapi/latest/restapi/requests/user/update_user/struct.ApiResqUserUpdate.html)
 
 #### Get User
 
@@ -118,9 +112,9 @@ Get a single user by ``users.id`` - by default, a user can only get their own ac
 
 - URL path: ``/user/USERID``
 - Method: ``GET``
-- Handler: [get_user](https://docs.rs/restapi/1.0.2/restapi/requests/user/get_user/fn.get_user.html)
-- Request: [ApiReqUserGet](https://docs.rs/restapi/1.0.2/restapi/requests/user/get_user/struct.ApiReqUserGet.html)
-- Response: [ApiResUserGet](https://docs.rs/restapi/1.0.2/restapi/requests/user/get_user/struct.ApiResqUserGet.html)
+- Handler: [get_user](https://docs.rs/restapi/latest/restapi/requests/user/get_user/fn.get_user.html)
+- Request: [ApiReqUserGet](https://docs.rs/restapi/latest/restapi/requests/user/get_user/struct.ApiReqUserGet.html)
+- Response: [ApiResUserGet](https://docs.rs/restapi/latest/restapi/requests/user/get_user/struct.ApiResqUserGet.html)
 
 #### Delete User
 
@@ -128,9 +122,9 @@ Delete a single ``users`` record (note: this does not delete the db record, just
 
 - URL path: ``/user``
 - Method: ``DELETE``
-- Handler: [delete_user](https://docs.rs/restapi/1.0.2/restapi/requests/user/delete_user/fn.delete_user.html)
-- Request: [ApiReqUserDelete](https://docs.rs/restapi/1.0.2/restapi/requests/user/delete_user/struct.ApiReqUserDelete.html)
-- Response: [ApiResUserDelete](https://docs.rs/restapi/1.0.2/restapi/requests/user/delete_user/struct.ApiResqUserDelete.html)
+- Handler: [delete_user](https://docs.rs/restapi/latest/restapi/requests/user/delete_user/fn.delete_user.html)
+- Request: [ApiReqUserDelete](https://docs.rs/restapi/latest/restapi/requests/user/delete_user/struct.ApiReqUserDelete.html)
+- Response: [ApiResUserDelete](https://docs.rs/restapi/latest/restapi/requests/user/delete_user/struct.ApiResqUserDelete.html)
 
 #### Search Users in the db
 
@@ -138,9 +132,9 @@ Search for matching ``users`` records in the db
 
 - URL path: ``/user/search``
 - Method: ``POST``
-- Handler: [search_users](https://docs.rs/restapi/1.0.2/restapi/requests/user/search_users/fn.search_users.html)
-- Request: [ApiReqUserSearch](https://docs.rs/restapi/1.0.2/restapi/requests/user/search_users/struct.ApiReqUserSearch.html)
-- Response: [ApiResUserSearch](https://docs.rs/restapi/1.0.2/restapi/requests/user/search_users/struct.ApiResqUserSearch.html)
+- Handler: [search_users](https://docs.rs/restapi/latest/restapi/requests/user/search_users/fn.search_users.html)
+- Request: [ApiReqUserSearch](https://docs.rs/restapi/latest/restapi/requests/user/search_users/struct.ApiReqUserSearch.html)
+- Response: [ApiResUserSearch](https://docs.rs/restapi/latest/restapi/requests/user/search_users/struct.ApiResqUserSearch.html)
 
 #### Create One-Time-Use Password Reset Token (OTP)
 
@@ -148,9 +142,9 @@ Create a one-time-use password reset token that allows a user to change their ``
 
 - URL path: ``/user/password/reset``
 - Method: ``POST``
-- Handler: [create_otp](https://docs.rs/restapi/1.0.2/restapi/requests/user/create_otp/fn.create_otp.html)
-- Request: [ApiReqUserCreateOtp](https://docs.rs/restapi/1.0.2/restapi/requests/user/create_otp/struct.ApiReqUserCreateOtp.html)
-- Response: [ApiResUserCreateOtp](https://docs.rs/restapi/1.0.2/restapi/requests/user/create_otp/struct.ApiResUserCreateOtp.html)
+- Handler: [create_otp](https://docs.rs/restapi/latest/restapi/requests/user/create_otp/fn.create_otp.html)
+- Request: [ApiReqUserCreateOtp](https://docs.rs/restapi/latest/restapi/requests/user/create_otp/struct.ApiReqUserCreateOtp.html)
+- Response: [ApiResUserCreateOtp](https://docs.rs/restapi/latest/restapi/requests/user/create_otp/struct.ApiResUserCreateOtp.html)
 
 #### Consume a One-Time-Use Password Reset Token (OTP)
 
@@ -158,9 +152,9 @@ Consume a one-time-use password and change the user's ``users.password`` value t
 
 - URL path: ``/user/password/change``
 - Method: ``POST``
-- Handler: [consume_user_otp](https://docs.rs/restapi/1.0.2/restapi/requests/user/consume_user_otp/fn.consume_user_otp.html)
-- Request: [ApiReqUserConsumeOtp](https://docs.rs/restapi/1.0.2/restapi/requests/user/consume_user_otp/struct.ApiReqUserConsumeOtp.html)
-- Response: [ApiResUserConsumeOtp](https://docs.rs/restapi/1.0.2/restapi/requests/user/consume_user_otp/struct.ApiResUserConsumeOtp.html)
+- Handler: [consume_user_otp](https://docs.rs/restapi/latest/restapi/requests/user/consume_user_otp/fn.consume_user_otp.html)
+- Request: [ApiReqUserConsumeOtp](https://docs.rs/restapi/latest/restapi/requests/user/consume_user_otp/struct.ApiReqUserConsumeOtp.html)
+- Response: [ApiResUserConsumeOtp](https://docs.rs/restapi/latest/restapi/requests/user/consume_user_otp/struct.ApiResUserConsumeOtp.html)
 
 #### Verify a User's email
 
@@ -168,9 +162,9 @@ Consume a one-time-use verification token and change the user's ``users.verified
 
 - URL path: ``/user/verify``
 - Method: ``GET``
-- Handler: [verify_user](https://docs.rs/restapi/1.0.2/restapi/requests/user/verify_user/fn.verify_user.html)
-- Request: [ApiReqUserVerify](https://docs.rs/restapi/1.0.2/restapi/requests/user/verify_user/struct.ApiReqUserVerify.html)
-- Response: [ApiResUserVerify](https://docs.rs/restapi/1.0.2/restapi/requests/user/verify_user/struct.ApiResUserVerify.html)
+- Handler: [verify_user](https://docs.rs/restapi/latest/restapi/requests/user/verify_user/fn.verify_user.html)
+- Request: [ApiReqUserVerify](https://docs.rs/restapi/latest/restapi/requests/user/verify_user/struct.ApiReqUserVerify.html)
+- Response: [ApiResUserVerify](https://docs.rs/restapi/latest/restapi/requests/user/verify_user/struct.ApiResUserVerify.html)
 
 ### User S3 APIs
 
@@ -180,9 +174,9 @@ Upload a local file on disk to AWS S3 asynchronously and store a tracking record
 
 - URL path: ``/user/data``
 - Method: ``POST``
-- Handler: [upload_user_data](https://docs.rs/restapi/1.0.2/restapi/requests/user/upload_user_data/fn.upload_user_data.html)
-- Request: [ApiReqUserUploadData](https://docs.rs/restapi/1.0.2/restapi/requests/user/upload_user_data/struct.ApiReqUserUploadData.html)
-- Response: [ApiResUserUploadData](https://docs.rs/restapi/1.0.2/restapi/requests/user/upload_user_data/struct.ApiResUserUploadData.html)
+- Handler: [upload_user_data](https://docs.rs/restapi/latest/restapi/requests/user/upload_user_data/fn.upload_user_data.html)
+- Request: [ApiReqUserUploadData](https://docs.rs/restapi/latest/restapi/requests/user/upload_user_data/struct.ApiReqUserUploadData.html)
+- Response: [ApiResUserUploadData](https://docs.rs/restapi/latest/restapi/requests/user/upload_user_data/struct.ApiResUserUploadData.html)
 
 #### Update an existing user data file record for a file stored in AWS S3
 
@@ -190,9 +184,9 @@ Update the ``users_data`` tracking record for a file that exists in AWS S3
 
 - URL path: ``/user/data``
 - Method: ``PUT``
-- Handler: [update_user_data](https://docs.rs/restapi/1.0.2/restapi/requests/user/update_user_data/fn.update_user_data.html)
-- Request: [ApiReqUserUpdateData](https://docs.rs/restapi/1.0.2/restapi/requests/user/update_user_data/struct.ApiReqUserUpdateData.html)
-- Response: [ApiResUserUpdateData](https://docs.rs/restapi/1.0.2/restapi/requests/user/update_user_data/struct.ApiResUserUpdateData.html)
+- Handler: [update_user_data](https://docs.rs/restapi/latest/restapi/requests/user/update_user_data/fn.update_user_data.html)
+- Request: [ApiReqUserUpdateData](https://docs.rs/restapi/latest/restapi/requests/user/update_user_data/struct.ApiReqUserUpdateData.html)
+- Response: [ApiResUserUpdateData](https://docs.rs/restapi/latest/restapi/requests/user/update_user_data/struct.ApiResUserUpdateData.html)
 
 #### Search for existing user data files from the db
 
@@ -200,9 +194,9 @@ Search for matching records in the ``users_data`` db based off the request's val
 
 - URL path: ``/user/data/search``
 - Method: ``POST``
-- Handler: [search_user_data](https://docs.rs/restapi/1.0.2/restapi/requests/user/search_user_data/fn.search_user_data.html)
-- Request: [ApiReqUserSearchData](https://docs.rs/restapi/1.0.2/restapi/requests/user/search_user_data/struct.ApiReqUserSearchData.html)
-- Response: [ApiResUserSearchData](https://docs.rs/restapi/1.0.2/restapi/requests/user/search_user_data/struct.ApiResUserSearchData.html)
+- Handler: [search_user_data](https://docs.rs/restapi/latest/restapi/requests/user/search_user_data/fn.search_user_data.html)
+- Request: [ApiReqUserSearchData](https://docs.rs/restapi/latest/restapi/requests/user/search_user_data/struct.ApiReqUserSearchData.html)
+- Response: [ApiResUserSearchData](https://docs.rs/restapi/latest/restapi/requests/user/search_user_data/struct.ApiResUserSearchData.html)
 
 ### User Authentication APIs
 
@@ -212,9 +206,9 @@ Log the user in and get a json web token (jwt) back for authentication on subseq
 
 - URL path: ``/login``
 - Method: ``POST``
-- Handler: [login](https://docs.rs/restapi/1.0.2/restapi/requests/auth/login_user/fn.login_user.html)
-- Request: [ApiReqUserLogin](https://docs.rs/restapi/1.0.2/restapi/requests/auth/login_user/struct.ApiReqUserLogin.html)
-- Response: [ApiResUserLogin](https://docs.rs/restapi/1.0.2/restapi/requests/auth/login_user/struct.ApiResUserLogin.html)
+- Handler: [login](https://docs.rs/restapi/latest/restapi/requests/auth/login_user/fn.login_user.html)
+- Request: [ApiReqUserLogin](https://docs.rs/restapi/latest/restapi/requests/auth/login_user/struct.ApiReqUserLogin.html)
+- Response: [ApiResUserLogin](https://docs.rs/restapi/latest/restapi/requests/auth/login_user/struct.ApiResUserLogin.html)
 
 ## Integration Tests
 

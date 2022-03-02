@@ -48,7 +48,7 @@ use crate::requests::auth::validate_user_token::validate_user_token;
 /// [`search_users`](crate::requests::user::search_users::search_users)
 /// function.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `user_id` - `i32` - user id
 /// * `email` - `String` - filter by
@@ -78,7 +78,7 @@ pub struct ApiReqUserSearch {
 /// hyper [`Response`](hyper::Response)
 /// sent back to the client.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `users` - Vec<[`ApiResUserGet`](crate::requests::user::get_user::ApiResUserGet)> -
 ///   list of matching `users` record(s)

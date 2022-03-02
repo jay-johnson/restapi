@@ -57,7 +57,7 @@ use crate::is3::is3::s3_upload_buffer;
 /// [`upload_user_data`](crate::requests::user::upload_user_data::upload_user_data)
 /// function.
 ///
-/// # Fields
+/// # Arguments
 ///
 /// * `data` - `Vec<u8>` - contents from the POST-ed file
 ///   as a vector of bytes
