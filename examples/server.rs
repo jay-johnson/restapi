@@ -11,11 +11,12 @@ use restapi::core::server::run_server::run_server;
 
 /// main
 ///
-/// Create a [`CoreConfig`](restapi::core::core_config) and
+/// Create a [`CoreConfig`](restapi::core::core_config::CoreConfig) and
 /// start the server using the configuration. There are
 /// many supported environment variables to customize most
-/// layers of the stack. Feel free to open a github issue to
-/// help me figure it out!
+/// layers of the stack.
+///
+/// Feel free to open a github issue to help me figure it out!
 ///
 #[tokio::main]
 async fn main() {
