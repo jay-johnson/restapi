@@ -1,18 +1,19 @@
-## Rust Rest API Stack with User Management
+# Rust Rest API Stack with User Management
 
-A secure-by-default rest api stack implemented with hyper, tokio and postgres. This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed. Comes with a working user management and authentication backend written in postgresql. For ease of use, you can browse the database using pg4admin for database management (deployed with docker compose).
+A secure-by-default rest api stack implemented with hyper, tokio, bb8 and postgres. This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed. Includes a working user management and authentication backend written in postgresql with async S3 uploading for POST-ed data files.
 
 ### Overview
 
 - User authentication enabled by default and implemented with custom tls assets to encrypt all JWT tokens with storage in postgres.
 - Users can upload and manage files stored on AWS S3 (assuming valid credentials are loaded outside this rust project).
 - User password reset and user email change support using one-time-use tokens that are stored in postgres.
-- User passwords are salted using [argon2](https://docs.rs/argon2/latest/argon2/).
+- User passwords are hashed using [argon2](https://docs.rs/argon2/latest/argon2/).
 - The hyper server hosts tls assets that can be re-generated with the tools in this repository.
-- The postgres database requires each client include the postgres tls certificate authority file for encrypting data in-transit.
-- The rest api server accesses postgres with a bb8 client threadpool.
-- Includes a tls asset generator tool ([./certs/generate-tls-assets.sh](https://github.com/jay-johnson/restapi/blob/main/certs/generate-tls-assets.sh)) for building self-signed tls assets (requires docker).
 - JWT encryption and decryption keys included and [documentation for building new keys as needed](https://github.com/jay-johnson/restapi/tree/main/jwt).
+- Includes a tls asset generator tool ([./certs/generate-tls-assets.sh](https://github.com/jay-johnson/restapi/blob/main/certs/generate-tls-assets.sh)) for building self-signed tls assets (requires docker).
+- The postgres database requires each client include the postgres tls certificate authority file for encrypting data in-transit.
+- The rest api server utilizes postgres with a [bb8 client threadpool](https://github.com/djc/bb8).
+- Includes [pg4admin](https://www.pgadmin.org/docs/pgadmin4/latest/index.html) for database management in a browser (deployed with docker compose).
 
 ### TLS Encryption Status
 
@@ -149,7 +150,7 @@ Create a one-time-use password reset token that allows a user to change their ``
 
 #### Consume a One-Time-Use Password Reset Token (OTP)
 
-Consume a one-time-use password and change the user's ``users.password`` value to the new argon2-salted password
+Consume a one-time-use password and change the user's ``users.password`` value to the new argon2-hashed password
 
 - URL path: ``/user/password/change``
 - Method: ``POST``
