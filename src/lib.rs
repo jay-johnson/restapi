@@ -2,6 +2,10 @@
 //!
 //! A secure-by-default rest api stack implemented with hyper, tokio, bb8 and postgres. This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed. Includes a working user management and authentication backend written in postgresql with async S3 uploading for POST-ed data files.
 //!
+//! # Examples
+//!
+//! Please see the [restapi/examples/server.rs](https://github.com/jay-johnson/restapi/blob/main/examples/server.rs) for developing your own rest api.
+//!
 //! ### Overview
 //!
 //! - User authentication enabled by default and implemented with custom tls assets to encrypt all JWT tokens with storage in postgres.

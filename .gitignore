@@ -1,3 +1,5 @@
 target
 ./docker/db/data-pgadmin
 ./docker/db/data-postgres
+*.swo
+*.swp
