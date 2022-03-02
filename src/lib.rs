@@ -6,28 +6,36 @@
 //!
 //! Please see the [restapi/examples/server.rs](https://github.com/jay-johnson/restapi/blob/main/examples/server.rs) for developing your own rest api.
 //!
-//! ### Overview
+//! ## Overview
 //!
-//! - User authentication enabled by default and implemented with custom tls assets to encrypt all JWT tokens with storage in postgres.
-//! - Users can upload and manage files stored on AWS S3 (assuming valid credentials are loaded outside this rust project).
+//! ### User
+//!
 //! - User password reset and user email change support using one-time-use tokens that are stored in postgres.
+//! - Users can upload and manage files stored on AWS S3 (assuming valid credentials are loaded outside this rust project).
 //! - User passwords are hashed using [argon2](https://docs.rs/argon2/latest/argon2/).
-//! - The hyper server hosts tls assets that can be re-generated with the tools in this repository.
-//! - JWT encryption and decryption keys included and [documentation for building new keys as needed](https://github.com/jay-johnson/restapi/tree/main/jwt).
-//! - Includes a tls asset generator tool ([./certs/generate-tls-assets.sh](https://github.com/jay-johnson/restapi/blob/main/certs/generate-tls-assets.sh)) for building self-signed tls assets (requires docker).
-//! - The postgres database requires each client include the postgres tls certificate authority file for encrypting data in-transit.
+//!
+//! ### Auth
+//!
+//! - User authentication enabled by default
+//! - Default JWT signing keys included with [documentation for building new keys as needed](https://github.com/jay-johnson/restapi/tree/main/jwt).
+//!
+//! ### Database
+//!
 //! - The rest api server utilizes postgres with a [bb8 client threadpool](https://github.com/djc/bb8).
+//! - The postgres database requires each client connection include the postgres tls certificate authority file for encrypting data in-transit.
 //! - Includes [pg4admin](https://www.pgadmin.org/docs/pgadmin4/latest/index.html) for database management in a browser (deployed with docker compose).
 //!
-//! ### TLS Encryption Status
+//! ### TLS Encryption
+//!
+//! - Includes a tls asset generator tool ([./certs/generate-tls-assets.sh](https://github.com/jay-johnson/restapi/blob/main/certs/generate-tls-assets.sh)) for building self-signed tls assets (requires docker).
+//!
+//! #### Ingress
 //!
 //! Component        | Status
 //! ---------------- | ------
 //! Rest API Server  | Listening for encrypted client connections on tcp port **3000**
-//! JWT              | Encrypting and decrypting tokens with [ECDSA using SHA-256](https://docs.rs/jsonwebtoken/latest/jsonwebtoken/enum.Algorithm.html#variant.ES256)
 //! Postgres         | Listening for encrypted client connections on tcp port **5432** (tls Certificate Authority required)
 //! pgAdmin          | Listening for encrypted HTTP client connections on tcp port **5433**
-//! AWS S3           | Encrypted at rest with [AES256](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard)
 //!
 //! ## Getting Started
 //!
@@ -44,21 +52,17 @@
 //!
 //! Here's how to generate them under the ``./certs`` directory:
 //!
-//! <a href="https://asciinema.org/a/473131?autoplay=1" width="600" height="400" target="_blank"><img src="https://asciinema.org/a/473131.png"/></a>
-//!
 //! ```bash
 //! cd certs
 //! ./generate-tls-assets.sh -f -c ./configs/dev-network.yml
 //! cd ..
 //! ```
 //!
+//! <a href="https://asciinema.org/a/473131?autoplay=1" width="600" height="400" target="_blank"><img src="https://asciinema.org/a/473131.png"/></a>
+//!
 //! ### Generate JWT Keys
 //!
-//! Authentication using JWT requires encrypting and decrypting using your own keys. Please refer to the [How to build JWT private and public keys for the jsonwebtokens crate doc](./certs/README.md) for more information.
-//!
-//! Here's how to generate the jwt keys under the ``./jwt`` directory:
-//!
-//! <a href="https://asciinema.org/a/473132?autoplay=1" width="600" height="400" target="_blank"><img src="https://asciinema.org/a/473132.png"/></a>
+//! This repo includes default JWT signing keys, but you should generate your own signing keys under the ``./jwt`` directory with these commands:
 //!
 //! ```bash
 //! cd jwt
@@ -67,6 +71,10 @@
 //! openssl ec -in private-key.pem -pubout -out public-key.pem
 //! cd ..
 //! ```
+//!
+//! <a href="https://asciinema.org/a/473132?autoplay=1" width="600" height="400" target="_blank"><img src="https://asciinema.org/a/473132.png"/></a>
+//!
+//! Please refer to the [How to build JWT private and public keys for the jsonwebtokens crate doc](./certs/README.md) for more information.
 //!
 //! ### Build the Postgres docker image
 //!
@@ -83,7 +91,7 @@
 //! ### Run API Server
 //!
 //! ```bash
-//! cargo run --example server
+//! export RUST_BACKTRACE=1 && export RUST_LOG=info && ./target/debug/examples/server
 //! ```
 //!
 //! ## Supported APIs
@@ -225,7 +233,7 @@
 //! ## Build and run the example server
 //!
 //! ```bash
-//! time cargo build --example server && export RUST_BACKTRACE=1 && export RUST_LOG=info && time ./target/debug/examples/server
+//! cargo build --example server && export RUST_BACKTRACE=1 && export RUST_LOG=info && ./target/debug/examples/server
 //! ```
 //!
 //! # Integration Tests Using curl Guide
