@@ -11,7 +11,8 @@
 //! - The hyper server hosts tls assets that can be re-generated with the tools in this repository.
 //! - The postgres database requires each client include the postgres tls certificate authority file for encrypting data in-transit.
 //! - The rest api server accesses postgres with a bb8 client threadpool.
-//! - encrypted JWT keys included and documentation to build new ones as you need.
+//! - Includes a tls asset generator tool ([./certs/generate-tls-assets.sh](https://github.com/jay-johnson/restapi/blob/main/certs/generate-tls-assets.sh)) for building self-signed tls assets.
+//! - JWT encryption and decryption keys included and [documentation for building new keys as needed](https://github.com/jay-johnson/restapi/tree/main/jwt).
 //!
 //! ### TLS Encryption Status
 //!
