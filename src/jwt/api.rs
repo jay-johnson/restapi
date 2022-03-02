@@ -25,7 +25,7 @@
 /// export TOKEN_EXPIRATION_SECONDS_INTO_FUTURE=86400;
 /// ```
 ///
-/// ### Token Encryption Keys
+/// ### JWT Signing Keys
 ///
 /// ```bash
 /// export TOKEN_ALGO_KEY_DIR="./jwt"
@@ -60,7 +60,7 @@ use jsonwebtoken::Validation;
 
 /// TokenClaim
 ///
-/// custom claim contained in the encrypted jwt
+/// custom claim contained in the signed jwt
 ///
 /// example:
 /// <https://github.com/Keats/jsonwebtoken/blob/master/examples/validation.rs#L6-L11>
@@ -93,6 +93,14 @@ pub struct TokenClaim {
 /// A valid user token will return:
 ///
 /// Ok([`TokenData`](jsonwebtoken::TokenData))
+///
+/// # Arguments
+///
+/// * `tracking_label` - `&str` - custom, unique identifier
+/// * `token` - `&str` - custom, unique org identifier
+/// * `uid` - `&str` - epoch time when the token expires
+/// * `decoding_key_bytes` - `&[u8]` - jwt key
+///   contents in bytes
 ///
 /// # Errors
 ///
@@ -190,7 +198,7 @@ pub fn get_expiration_epoch_time(
 /// get_token_org
 ///
 /// wrapper for returning an env var `TOKEN_ORG`
-/// that can change the encrypted jwt contents for a
+/// that can change the signed jwt contents for a
 /// custom organization name
 ///
 /// v2 this should move into the server statics:
@@ -226,14 +234,15 @@ pub fn get_token_expiration_in_seconds()
 /// create_token
 ///
 /// create a [`TokenClaim`](crate::jwt::api::TokenClaim), and
-/// encrypt the `TokenClaim` using the algorithm:
+/// sign the it using the algorithm:
 /// [`ES256`](jsonwebtoken::Algorithm)
 ///
 /// # Arguments
 ///
-/// * `tracking_label` - &str - logging label for the caller
-/// * `uid` - &str - unique identifier for this application
-/// * `encoding_key_bytes` - &[u8] - static jwt encryption key
+/// * `tracking_label` - `&str` - logging label for the caller
+/// * `uid` - `&str` - unique identifier for this application
+/// * `encoding_key_bytes` - `&[u8]` - jwt key
+///   contents in bytes
 ///
 /// # Returns
 ///
