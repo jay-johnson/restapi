@@ -9,7 +9,7 @@ use crate::core::core_config::CoreConfig;
 
 /// create_user_token
 ///
-/// Create an encrypted user jwt
+/// Create a signed jwt for the ``user_id`` and ``user_email``
 /// and store it in postgres with an expiration date
 ///
 /// # Arguments

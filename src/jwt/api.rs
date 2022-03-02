@@ -1,46 +1,58 @@
-/// # JWT (json web tokens)
-///
-/// ## Configurable JWT Environment Variables
-///
-/// ### Header key for the token
-///
-/// ```bash
-/// export TOKEN_HEADER="Bearer"
-/// ```
-///
-/// ### Token Org (embedded in the jwt)
-///
-/// ```bash
-/// export TOKEN_ORG="Org Name";
-/// ```
-///
-/// ### Token Lifetime Duration
-///
-/// ```bash
-/// # 30 days
-/// export TOKEN_EXPIRATION_SECONDS_INTO_FUTURE=2592000;
-/// # 7 days
-/// export TOKEN_EXPIRATION_SECONDS_INTO_FUTURE=604800;
-/// # 1 day
-/// export TOKEN_EXPIRATION_SECONDS_INTO_FUTURE=86400;
-/// ```
-///
-/// ### JWT Signing Keys
-///
-/// ```bash
-/// export TOKEN_ALGO_KEY_DIR="./jwt"
-/// export TOKEN_ALGO_PRIVATE_KEY_ORG="${TOKEN_ALGO_KEY_DIR}/private-key.pem"
-/// export TOKEN_ALGO_PRIVATE_KEY="${TOKEN_ALGO_KEY_DIR}/private-key-pkcs8.pem"
-/// export TOKEN_ALGO_PUBLIC_KEY="${TOKEN_ALGO_KEY_DIR}/public-key.pem"
-/// ```
-///
-/// generate your own jwt keys with these commands (bash)
-///
-/// ```bash
-/// openssl ecparam -name prime256v1 -genkey -out "${TOKEN_ALGO_PRIVATE_KEY_ORG}"
-/// openssl pkcs8 -topk8 -nocrypt -in private-key.pem -out "${TOKEN_ALGO_PRIVATE_KEY}"
-/// openssl ec -in "${TOKEN_ALGO_PRIVATE_KEY_ORG}" -pubout -out "${TOKEN_ALGO_PUBLIC_KEY}"
-/// ```
+//! # JWT functions for creation and valiation
+//!
+//! Newly-created tokens are signed with the
+//! private jwt key
+//! (``TOKEN_ALGO_PRIVATE_KEY``)
+//! and decoded with the public jwt key
+//! (``TOKEN_ALGO_PUBLIC_KEY``).
+//!
+//! - [`create_token`](crate::jwt::api::create_token)
+//!   uses ``TOKEN_ALGO_PRIVATE_KEY``
+//! - [`validate_token`](crate::jwt::api::validate_token)
+//!   uses ``TOKEN_ALGO_PUBLIC_KEY``
+//!
+//! ## Configurable JWT Environment Variables
+//!
+//! ### Header key for the token
+//!
+//! ```bash
+//! export TOKEN_HEADER="Bearer"
+//! ```
+//!
+//! ### Token Org (embedded in the jwt)
+//!
+//! ```bash
+//! export TOKEN_ORG="Org Name";
+//! ```
+//!
+//! ### Token Lifetime Duration
+//!
+//! ```bash
+//! # 30 days
+//! export TOKEN_EXPIRATION_SECONDS_INTO_FUTURE=2592000;
+//! # 7 days
+//! export TOKEN_EXPIRATION_SECONDS_INTO_FUTURE=604800;
+//! # 1 day
+//! export TOKEN_EXPIRATION_SECONDS_INTO_FUTURE=86400;
+//! ```
+//!
+//! ### JWT Signing Keys
+//!
+//! ```bash
+//! export TOKEN_ALGO_KEY_DIR="./jwt"
+//! export TOKEN_ALGO_PRIVATE_KEY_ORG="${TOKEN_ALGO_KEY_DIR}/private-key.pem"
+//! export TOKEN_ALGO_PRIVATE_KEY="${TOKEN_ALGO_KEY_DIR}/private-key-pkcs8.pem"
+//! export TOKEN_ALGO_PUBLIC_KEY="${TOKEN_ALGO_KEY_DIR}/public-key.pem"
+//! ```
+//!
+//! generate your own jwt keys with these commands (bash)
+//!
+//! ```bash
+//! openssl ecparam -name prime256v1 -genkey -out "${TOKEN_ALGO_PRIVATE_KEY_ORG}"
+//! openssl pkcs8 -topk8 -nocrypt -in private-key.pem -out "${TOKEN_ALGO_PRIVATE_KEY}"
+//! openssl ec -in "${TOKEN_ALGO_PRIVATE_KEY_ORG}" -pubout -out "${TOKEN_ALGO_PUBLIC_KEY}"
+//! ```
+//!
 
 use serde::Deserialize;
 use serde::Serialize;
@@ -83,8 +95,13 @@ pub struct TokenClaim {
 /// validate a decoded jwt token
 ///
 /// 1. create a token validator object
-/// 2. decode the token by decrypting it using the
-///    `decoding_key_bytes` and validate the contents
+/// 2. decode the client's jwt with the
+///    ``decoding_key_bytes``
+///    and validate the contents
+///
+/// Change the decoding key with the
+/// enviroment variable:
+/// ``TOKEN_ALGO_PUBLIC_KEY``
 ///
 /// # Returns
 ///
@@ -172,7 +189,11 @@ pub async fn validate_token(
 
 /// get_current_timestamp
 ///
-/// get the current unix epoch time as a `usize`
+/// get the current unix epoch time as a ``usize``
+///
+/// # Returns
+///
+/// ``usize``
 ///
 pub fn get_current_timestamp()
 -> usize
@@ -187,6 +208,10 @@ pub fn get_current_timestamp()
 /// determine when the jwt should expire in the future.
 /// and return it as a `usize`
 ///
+/// # Returns
+///
+/// ``usize``
+///
 pub fn get_expiration_epoch_time(
     seconds_in_future: usize)
 -> usize
@@ -197,12 +222,16 @@ pub fn get_expiration_epoch_time(
 
 /// get_token_org
 ///
-/// wrapper for returning an env var `TOKEN_ORG`
+/// wrapper for returning an env var ``TOKEN_ORG``
 /// that can change the signed jwt contents for a
 /// custom organization name
 ///
 /// v2 this should move into the server statics:
 /// [`CoreConfig`](crate::core::core_config::CoreConfig)
+///
+/// # Returns
+///
+/// ``String``
 ///
 pub fn get_token_org()
 -> String
@@ -215,12 +244,16 @@ pub fn get_token_org()
 /// get_token_expiration_in_seconds
 ///
 /// wrapper for returning an env var
-/// `TOKEN_EXPIRATION_SECONDS_INTO_FUTURE`
+/// ``TOKEN_EXPIRATION_SECONDS_INTO_FUTURE``
 /// that can change the future expiration epoch time
 /// for a new jwt
 ///
 /// v2 this should move into the server statics:
 /// [`CoreConfig`](crate::core::core_config::CoreConfig)
+///
+/// # Returns
+///
+/// ``usize``
 ///
 pub fn get_token_expiration_in_seconds()
 -> usize
@@ -233,9 +266,12 @@ pub fn get_token_expiration_in_seconds()
 
 /// create_token
 ///
-/// create a [`TokenClaim`](crate::jwt::api::TokenClaim), and
-/// sign the it using the algorithm:
+/// create a
+/// [`TokenClaim`](crate::jwt::api::TokenClaim)
+/// and sign it using the algorithm:
 /// [`ES256`](jsonwebtoken::Algorithm)
+/// with the jwt ``private_key``
+/// (environment variable ``TOKEN_ALGO_PRIVATE_KEY``)
 ///
 /// # Arguments
 ///

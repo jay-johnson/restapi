@@ -14,7 +14,7 @@ use crate::requests::models::user::get_user_by_id;
 
 /// validate_user_token
 ///
-/// Confirm the token in the header token key
+/// Confirm the client's jwt from the header token key
 /// (controlled by env var `TOKEN_HEADER=Bearer` as the default)
 /// is valid with the following additional restriction(s):
 ///

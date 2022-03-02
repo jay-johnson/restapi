@@ -1,3 +1,6 @@
+//! # Handle all Client Requests
+//!
+
 use std::convert::Infallible;
 
 use hyper::body;
@@ -52,26 +55,24 @@ pub async fn handle_request(
 
     // Handle requests here
 
-    // elided: drop requests if 'accept' is not acceptable
-    // elided: handle OPTIONS requests
-    // elided: read session cookie and establish session
-    // elided: route to page
-
+    /*
+    //
+    // debug client ciphers with this section
+    //
     let remote_addr = data.remote_addr.clone();
     let cipher_suite = data.tls_info.clone().as_ref().unwrap().ciphersuite;
 
-    if false {
-        info!("\
-            {tracking_label} - handle request - \
-            uri={:?} \
-            method={:?} \
-            remote_addr={} \
-            ciphers={:?}",
-            data.request.uri(),
-            data.request.method(),
-            remote_addr,
-            cipher_suite);
-    }
+    info!("\
+        {tracking_label} - handle request - \
+        uri={:?} \
+        method={:?} \
+        remote_addr={remote_addr} \
+        ciphers={:?}",
+        data.request.uri(),
+        data.request.method(),
+        remote_addr,
+        cipher_suite);
+    */
 
     let (parts, body) = data.request.into_parts();
     let request_uri = parts.uri.path().clone();
