@@ -4,7 +4,7 @@
 
 ```bash
 export API_TLS_DIR="./certs/tls/api"
-export TLS_CERT_ARGS="--cacert ${API_TLS_DIR}/api-ca.pem \
+export TLS_ARGS="--cacert ${API_TLS_DIR}/api-ca.pem \
     --cert ${API_TLS_DIR}/api.crt \
     --key ${API_TLS_DIR}/api.key"
 ```
@@ -14,7 +14,7 @@ export TLS_CERT_ARGS="--cacert ${API_TLS_DIR}/api-ca.pem \
 ### Login (user does not exist yet)
 
 ```bash
-curl -s ${TLS_CERT_ARGS} \
+curl -s ${TLS_ARGS} \
     "https://0.0.0.0:3000/login" \
     -XPOST \
     -d '{"email":"user@email.com","password":"12345"}' | jq
@@ -23,7 +23,7 @@ curl -s ${TLS_CERT_ARGS} \
 ### Create user
 
 ```bash
-curl -s ${TLS_CERT_ARGS} \
+curl -s ${TLS_ARGS} \
     "https://0.0.0.0:3000/user" \
     -XPOST \
     -d '{"email":"user@email.com","password":"12345"}' | jq
@@ -32,7 +32,7 @@ curl -s ${TLS_CERT_ARGS} \
 ### Login and save the token as an env variable
 
 ```bash
-export TOKEN=$(curl -s ${TLS_CERT_ARGS} \
+export TOKEN=$(curl -s ${TLS_ARGS} \
     "https://0.0.0.0:3000/login" \
     -XPOST \
     -d '{"email":"user@email.com","password":"12345"}' | jq -r '.token')
@@ -41,7 +41,7 @@ export TOKEN=$(curl -s ${TLS_CERT_ARGS} \
 ### Get user
 
 ```bash
-curl -s ${TLS_CERT_ARGS} \
+curl -s ${TLS_ARGS} \
     "https://0.0.0.0:3000/user/1" \
     -XGET \
     -H "Bearer: ${TOKEN}" | jq
@@ -50,7 +50,7 @@ curl -s ${TLS_CERT_ARGS} \
 ### Update user
 
 ```bash
-curl -s ${TLS_CERT_ARGS} \
+curl -s ${TLS_ARGS} \
     "https://0.0.0.0:3000/user" \
     -H "Bearer: ${TOKEN}" \
     -XPUT \
@@ -62,7 +62,7 @@ curl -s ${TLS_CERT_ARGS} \
 #### Change to a new password
 
 ```bash
-curl -s ${TLS_CERT_ARGS} \
+curl -s ${TLS_ARGS} \
     "https://0.0.0.0:3000/user" \
     -H "Bearer: ${TOKEN}" \
     -XPUT \
@@ -72,7 +72,7 @@ curl -s ${TLS_CERT_ARGS} \
 #### Change password back to the original
 
 ```bash
-curl -s ${TLS_CERT_ARGS} \
+curl -s ${TLS_ARGS} \
     "https://0.0.0.0:3000/user" \
     -H "Bearer: ${TOKEN}" \
     -XPUT \
@@ -82,7 +82,7 @@ curl -s ${TLS_CERT_ARGS} \
 ### Create a one-time-use-password (otp) allowing a user to reset their users.password from the users.email
 
 ```bash
-curl -s ${TLS_CERT_ARGS} \
+curl -s ${TLS_ARGS} \
     "https://0.0.0.0:3000/user/password/reset" \
     -H "Bearer: ${TOKEN}" \
     -XPOST \
@@ -92,7 +92,7 @@ curl -s ${TLS_CERT_ARGS} \
 ### Consume user one-time-use-password token to reset the users.password (otp)
 
 ```bash
-curl -s ${TLS_CERT_ARGS} \
+curl -s ${TLS_ARGS} \
     "https://0.0.0.0:3000/user/password/change" \
     -H "Bearer: ${TOKEN}" \
     -XPOST \
@@ -102,7 +102,7 @@ curl -s ${TLS_CERT_ARGS} \
 ### Change user email
 
 ```bash
-curl -s ${TLS_CERT_ARGS} \
+curl -s ${TLS_ARGS} \
     "https://0.0.0.0:3000/user" \
     -H "Bearer: ${TOKEN}" \
     -XPUT \
@@ -112,14 +112,14 @@ curl -s ${TLS_CERT_ARGS} \
 ### Verify user email
 
 ```bash
-curl -s ${TLS_CERT_ARGS} \
+curl -s ${TLS_ARGS} \
     "https://0.0.0.0:3000/user/verify?u=1&t=2" | jq
 ```
 
 ### Search user (token must be for the POST-ed user id)
 
 ```bash
-curl -s ${TLS_CERT_ARGS} \
+curl -s ${TLS_ARGS} \
     "https://0.0.0.0:3000/user/search" \
     -XPOST \
     -H "Bearer: ${TOKEN}" \
@@ -129,7 +129,7 @@ curl -s ${TLS_CERT_ARGS} \
 ### Delete user
 
 ```bash
-curl -s ${TLS_CERT_ARGS} \
+curl -s ${TLS_ARGS} \
     "https://0.0.0.0:3000/user" \
     -XDELETE \
     -d '{"email":"user@email.com","user_id":1}' \
@@ -204,7 +204,7 @@ export S3_DATA_PREFIX="user/data/file"
 ```
 
 ```bash
-curl -s ${TLS_CERT_ARGS} \
+curl -s ${TLS_ARGS} \
     -XPOST \
     --data-binary "@${UPLOAD_FILE}" \
     "https://0.0.0.0:3000/user/data" \
@@ -220,7 +220,7 @@ curl -s ${TLS_CERT_ARGS} \
 ### Search user data (token must be for the POST-ed user id)
 
 ```bash
-curl -s ${TLS_CERT_ARGS} \
+curl -s ${TLS_ARGS} \
     "https://0.0.0.0:3000/user/data/search" \
     -XPOST \
     -H "Bearer: ${TOKEN}" \
@@ -230,7 +230,7 @@ curl -s ${TLS_CERT_ARGS} \
 ### Update a single user data record (token must be for the PUT user id)
 
 ```bash
-curl -s ${TLS_CERT_ARGS} \
+curl -s ${TLS_ARGS} \
     "https://0.0.0.0:3000/user/data" \
     -XPUT \
     -H "Bearer: ${TOKEN}" \
@@ -240,7 +240,7 @@ curl -s ${TLS_CERT_ARGS} \
 ### Login and save the token as an env variable
 
 ```bash
-export TOKEN=$(curl -s ${TLS_CERT_ARGS} \
+export TOKEN=$(curl -s ${TLS_ARGS} \
     "https://0.0.0.0:3000/login" \
     -XPOST \
     -d '{"email":"user@email.com","password":"12345"}' | jq -r '.token')
