@@ -174,7 +174,7 @@
 //! ### Build Base Image
 //!
 //! This will build an initial base image inside a docker container. Note: this base image will **not** work on a different cpu chipset because the openssl libraries are compiled within the image for this base image.
-//! //!
+//!
 //! ```bash
 //! ./build-base.sh
 //! ```
