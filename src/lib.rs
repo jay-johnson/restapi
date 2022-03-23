@@ -103,10 +103,10 @@
 //! SERVER_NAME_API       | api
 //! SERVER_NAME_LABEL     | rust-restapi
 //! API_ENDPOINT          | 0.0.0.0:3000
-//! API_TLS_DIR           | /server/certs/tls/api
-//! API_TLS_CA            | /server/certs/tls/api/api-ca.pem
-//! API_TLS_CERT          | /server/certs/tls/api/api.crt
-//! API_TLS_KEY           | /server/certs/tls/api/api.key
+//! API_TLS_DIR           | ./certs/tls/api
+//! API_TLS_CA            | ./certs/tls/api/api-ca.pem
+//! API_TLS_CERT          | ./certs/tls/api/api.crt
+//! API_TLS_KEY           | ./certs/tls/api/api.key
 //!
 //! ### User Email Verification
 //!
@@ -116,7 +116,7 @@
 //! USER_EMAIL_VERIFICATION_ENABLED        | "1"
 //! USER_EMAIL_VERIFICATION_EXP_IN_SECONDS | "2592000"
 //!
-//! ### User Email Verification
+//! ### User One-Time-Use Token Expiration for Password Recovery
 //!
 //! Environment Variable    | Default
 //! ----------------------- | -------
@@ -128,11 +128,11 @@
 //! --------------------- | -------
 //! POSTGRES_USERNAME     | datawriter
 //! POSTGRES_PASSWORD     | "123321"
-//! POSTGRES_ENDPOINT     | postgres.default.svc.cluster.local:5432
-//! POSTGRES_TLS_DIR      | /server/certs/tls/postgres
-//! POSTGRES_TLS_CA       | /server/certs/tls/postgres/postgres-ca.pem
-//! POSTGRES_TLS_CERT     | /server/certs/tls/postgres/postgres.crt
-//! POSTGRES_TLS_KEY      | /server/certs/tls/postgres/postgres.key
+//! POSTGRES_ENDPOINT     | 0.0.0.0:5432
+//! POSTGRES_TLS_DIR      | ./certs/tls/postgres
+//! POSTGRES_TLS_CA       | ./certs/tls/postgres/postgres-ca.pem
+//! POSTGRES_TLS_CERT     | ./certs/tls/postgres/postgres.crt
+//! POSTGRES_TLS_KEY      | ./certs/tls/postgres/postgres.key
 //! POSTGRES_DB_CONN_TYPE | postgresql
 //!
 //! ### S3
@@ -151,9 +151,9 @@
 //! TOKEN_EXPIRATION_SECONDS_INTO_FUTURE | "2592000"
 //! TOKEN_ORG                            | example.org
 //! TOKEN_HEADER                         | Bearer
-//! TOKEN_ALGO_PRIVATE_KEY               | /server/certs/tls/jwt/private-key.pem
-//! TOKEN_ALGO_PUBLIC_KEY                | /server/certs/tls/jwt/public-key.pem
-//! SERVER_PKI_DIR_JWT                   | /server/certs/tls/jwt
+//! TOKEN_ALGO_PRIVATE_KEY               | ./jwt/private-key-pkcs8.pem
+//! TOKEN_ALGO_PUBLIC_KEY                | ./jwt/public-key.pem
+//! SERVER_PKI_DIR_JWT                   | ./jwt
 //! SERVER_PASSWORD_SALT                 | 78197b60-c950-4339-a52c-053165a04764
 //!
 //! ### Rust

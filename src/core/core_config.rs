@@ -140,7 +140,7 @@ pub async fn build_core_config(
     let db_conn_type = std::env::var(format!("{db_cert_name}_DB_CONN_TYPE").to_uppercase())
         .unwrap_or(format!("postgresql"));
     let db_address = std::env::var(format!("{db_cert_name}_ENDPOINT").to_uppercase())
-        .unwrap_or(format!("postgres.default.svc.cluster.local:5432"));
+        .unwrap_or(format!("0.0.0.0:5432"));
     let db_username = std::env::var(format!("{db_cert_name}_USERNAME").to_uppercase())
         .unwrap_or(format!("datawriter"));
     let db_password = std::env::var(format!("{db_cert_name}_PASSWORD").to_uppercase())
