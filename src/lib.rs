@@ -1,6 +1,6 @@
 //! # Rust Rest API Stack with User Management
 //!
-//! A secure-by-default rest api stack implemented with hyper, tokio, bb8 and postgres. This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed. Includes a working user management and authentication backend written in postgresql with async S3 uploading for POST-ed data files.
+//! A secure-by-default rest api stack implemented with hyper, tokio, bb8 and postgres with prometheus for monitoring. This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed. Includes a working user management and authentication backend written in postgresql with async S3 uploading for POST-ed data files.
 //!
 //! # Examples
 //!
@@ -634,7 +634,7 @@
 //! ## Build Docs
 //!
 //! ```bash
-//! cargo doc --features monitoring --example server
+//! cargo doc --example server
 //! ```
 
 extern crate pretty_env_logger;

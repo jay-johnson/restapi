@@ -21,7 +21,7 @@ ADD ./examples /server/examples
 
 RUN echo "starting build" \
     && cd /server \
-    && cargo build --release --features monitoring --example server
+    && cargo build --release --example server
 
 EXPOSE 3000
 ENTRYPOINT ["/server/target/release/examples/server"]

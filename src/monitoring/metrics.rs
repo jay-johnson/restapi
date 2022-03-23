@@ -1,7 +1,5 @@
 //! # Monitoring a Hyper Server with Prometheus
 //!
-//! This module requires the `monitoring` feature to be enabled
-//! during compilation.
 use std::convert::Infallible;
 
 use prometheus::*;
@@ -203,8 +201,7 @@ lazy_static! {
 ///
 /// Prometheus prefers to scrape metrics on a timed frequency. This function
 /// hosts all the collected metrics under the uri=`/metrics` with
-/// a `GET` method assuming the `monitoring` feature was compiled into
-/// the build.
+/// a `GET` method.
 ///
 /// # Examples
 ///
@@ -215,11 +212,6 @@ lazy_static! {
 pub fn handle_showing_metrics()
 -> std::result::Result<Response<Body>, Infallible>
 {
-    #[cfg(not(feature = "monitoring"))]
-    return Ok(
-        Response::new(
-            Body::from(format!("{{\"status\":\"metrics not enabled\"}}"))));
-
     let encoder = TextEncoder::new();
     let mut buffer = vec![];
     encoder
@@ -237,22 +229,16 @@ pub fn handle_showing_metrics()
 
 /// record_monitoring_metrics_api_before
 ///
-/// This method requires building the library with the
-/// `monitoring` feature enabled
-///
-/// If the `monitoring` feature is not enabled this method
-/// immediately returns.
-///
-/// If the `monitoring` feature is enabled, this method records
-/// tracked metrics using [Prometheus](https://docs.rs/prometheus/latest/prometheus/)
+/// This method records tracked metrics using
+/// [Prometheus](https://docs.rs/prometheus/latest/prometheus/)
 /// before the internal service handlers start processing the
 /// request.
 ///
 /// # Arguments
 ///
 /// * `uri` - `str&` - url sub path without the hosting fqdn address
-/// * `resource` - `str&` - api resource (`user`, `data`, `auth`, etc.)
-/// * `method` - `str&` - api resource (`user`, `data`, `auth`, etc.)
+/// * `resource` - `str&` - HTTP resource (`user`, `data`, `auth`, etc.)
+/// * `method` - `str&` - HTTP method used (`get`, `post`, `put`, `delete`, etc.)
 ///
 /// # Returns
 ///
@@ -272,10 +258,6 @@ pub fn record_monitoring_metrics_api_before(
     resource: &str,
     method: &str)
 {
-    // if not compiled with the monitoring feature - return
-    #[cfg(not(feature = "monitoring"))]
-    return;
-
     debug!("\
         metrics - before - uri={uri} \
         resource={resource} \
@@ -366,14 +348,8 @@ pub fn record_monitoring_metrics_api_before(
 
 /// record_monitoring_metrics_api_after
 ///
-/// This method requires building the library with the
-/// `monitoring` feature enabled
-///
-/// If the `monitoring` feature is not enabled this method
-/// immediately returns the `processed_response` variable.
-///
-/// If the `monitoring` feature is enabled, this method records
-/// tracked metrics using [Prometheus](https://docs.rs/prometheus/latest/prometheus/)
+/// This method records tracked metrics using
+/// [Prometheus](https://docs.rs/prometheus/latest/prometheus/)
 /// after the internal service handlers processed the
 /// request. This allows for tracking latency and status codes
 /// for each resource and each method.
@@ -381,8 +357,8 @@ pub fn record_monitoring_metrics_api_before(
 /// # Arguments
 ///
 /// * `uri` - `str&` - url sub path without the hosting fqdn address
-/// * `resource` - `str&` - api resource (`user`, `data`, `auth`, etc.)
-/// * `method` - `str&` - api resource (`user`, `data`, `auth`, etc.)
+/// * `resource` - `str&` - HTTP resource (`user`, `data`, `auth`, etc.)
+/// * `method` - `str&` - HTTP method used (`get`, `post`, `put`, `delete`, etc.)
 /// * `processed_response` - `str&` - existing [`Response`](hyper::Response)
 ///   from the internal service handler
 ///
@@ -414,10 +390,6 @@ pub fn record_monitoring_metrics_api_after(
     processed_response: std::result::Result<Response<Body>, Infallible>)
 -> std::result::Result<Response<Body>, Infallible>
 {
-    // if not compiled with the monitoring feature - return
-    #[cfg(not(feature = "monitoring"))]
-    return processed_response;
-
     if processed_response.is_ok() {
         let cloned_result = processed_response.unwrap();
         match (

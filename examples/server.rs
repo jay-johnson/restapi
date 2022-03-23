@@ -4,7 +4,6 @@ extern crate serde;
 extern crate serde_json;
 extern crate chrono;
 extern crate uuid;
-#[cfg(feature = "monitoring")]
 extern crate prometheus;
 
 use restapi::core::core_config::CoreConfig;

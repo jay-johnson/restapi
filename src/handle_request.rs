@@ -1,11 +1,7 @@
 //! # Handle all Client Requests
 //!
-//! ## Features
-//!
-//! When including the ``monitoring`` feature, the
-//! server hosts a metrics endpoint for prometheus at:
-//! ``https://API_ENDPOINT/metrics`` with a ``GET``
-//! method.
+//! Prometheus scrapes metrics at the endpoint:
+//! ``https://API_ENDPOINT/metrics`` with a ``GET`` method.
 
 use std::convert::Infallible;
 
@@ -14,7 +10,6 @@ use hyper::Body;
 use hyper::Method;
 use hyper::Response;
 
-#[cfg(feature = "monitoring")]
 use crate::monitoring::metrics::record_monitoring_metrics_api_before;
 use crate::monitoring::metrics::record_monitoring_metrics_api_after;
 use crate::monitoring::metrics::handle_showing_metrics;
@@ -46,11 +41,6 @@ use crate::requests::user::verify_user::verify_user;
 /// handle_request
 ///
 /// The url routing handler for all api requests.
-///
-/// When including the ``monitoring`` feature, the
-/// server hosts a metrics endpoint for prometheus at:
-/// ``https://API_ENDPOINT/metrics`` with a ``GET``
-/// method.
 ///
 /// # Arguments
 ///

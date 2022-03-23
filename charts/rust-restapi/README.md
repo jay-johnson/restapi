@@ -1,4 +1,4 @@
-# Rust Rest API with hyper, tokio, bb8 and prometheus for monitoring
+# Rust Rest API with hyper, tokio, bb8 and Prometheus for Monitoring
 
 ## Install
 
