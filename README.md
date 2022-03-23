@@ -1,6 +1,6 @@
-# Rust Rest API Stack with User Management
+# Rust Rest API Stack with User Management and Prometheus for Monitoring
 
-A secure-by-default rest api stack implemented with hyper, tokio, bb8 and postgres. This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed. Includes a working user management and authentication backend written in postgresql with async S3 uploading for POST-ed data files.
+A secure-by-default rest api stack implemented with hyper, tokio, bb8 and postgres with optional prometheus monitoring. This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed. Includes a working user management and authentication backend written in postgresql with async S3 uploading for POST-ed data files.
 
 ## Overview
 
@@ -88,6 +88,137 @@ cargo build --example server
 
 ```bash
 export RUST_BACKTRACE=1 && export RUST_LOG=info && ./target/debug/examples/server
+```
+
+## Environment Variables
+
+### Rest API
+
+Environment Variable  | Default
+--------------------- | -------
+SERVER_NAME_API       | api
+SERVER_NAME_LABEL     | rust-restapi
+API_ENDPOINT          | 0.0.0.0:3000
+API_TLS_DIR           | /server/certs/tls/api
+API_TLS_CA            | /server/certs/tls/api/api-ca.pem
+API_TLS_CERT          | /server/certs/tls/api/api.crt
+API_TLS_KEY           | /server/certs/tls/api/api.key
+
+### User Email Verification
+
+Environment Variable                   | Default
+-------------------------------------- | -------
+USER_EMAIL_VERIFICATION_REQUIRED       | "0"
+USER_EMAIL_VERIFICATION_ENABLED        | "1"
+USER_EMAIL_VERIFICATION_EXP_IN_SECONDS | "2592000"
+
+### User Email Verification
+
+Environment Variable    | Default
+----------------------- | -------
+USER_OTP_EXP_IN_SECONDS | "2592000"
+
+### Postgres Database
+
+Environment Variable  | Default
+--------------------- | -------
+POSTGRES_USERNAME     | datawriter
+POSTGRES_PASSWORD     | "123321"
+POSTGRES_ENDPOINT     | postgres.default.svc.cluster.local:5432
+POSTGRES_TLS_DIR      | /server/certs/tls/postgres
+POSTGRES_TLS_CA       | /server/certs/tls/postgres/postgres-ca.pem
+POSTGRES_TLS_CERT     | /server/certs/tls/postgres/postgres.crt
+POSTGRES_TLS_KEY      | /server/certs/tls/postgres/postgres.key
+POSTGRES_DB_CONN_TYPE | postgresql
+
+### S3
+
+Environment Variable | Default
+-------------------- | -------
+S3_DATA_BUCKET       | YOUR_BUCKET
+S3_DATA_PREFIX       | /rust-restapi/tests
+S3_STORAGE_CLASS     | STANDARD
+S3_DATA_UPLOAD_TO_S3 | "0"
+
+### JWT
+
+Environment Variable                 | Default
+------------------------------------ | -------
+TOKEN_EXPIRATION_SECONDS_INTO_FUTURE | "2592000"
+TOKEN_ORG                            | example.org
+TOKEN_HEADER                         | Bearer
+TOKEN_ALGO_PRIVATE_KEY               | /server/certs/tls/jwt/private-key.pem
+TOKEN_ALGO_PUBLIC_KEY                | /server/certs/tls/jwt/public-key.pem
+SERVER_PKI_DIR_JWT                   | /server/certs/tls/jwt
+SERVER_PASSWORD_SALT                 | 78197b60-c950-4339-a52c-053165a04764
+
+### Rust
+
+Environment Variable | Default
+-------------------- | -------
+RUST_BACKTRACE       | "1"
+RUST_LOG             | info
+
+### Debug
+
+Environment Variable | Default
+-------------------- | -------
+DEBUG                | "1"
+
+## Docker Builds
+
+### Build Base Image
+
+This will build an initial base image inside a docker container. Note: this base image will **not** work on a different cpu chipset because the openssl libraries are compiled within the image for this base image.
+
+```bash
+./build-base.sh
+```
+
+### Build Derived Image
+
+By reusing the base image, this derived image only needs to recompile the server. With minimal code changes, this is a much faster build than the base image build.
+
+```bash
+./build-derived.sh
+```
+
+## Kubernetes
+
+### Helm Chart
+
+#### Deploy TLS Assets into Kubernetes
+
+```bash
+./deploy-tls-assets.sh
+```
+
+#### Deploy the Rust Rest API into Kubernetes
+
+By default this uses ``jayjohnson/rust-restapi`` image by default
+
+```bash
+helm install -n default rust-restapi ./charts/rust-restapi
+```
+
+## Monitoring
+
+### Prometheus
+
+This section assumes you have a working prometheus instance already running inside kubernetes. Below is the Prometheus ``scrape_config`` to monitor the rest api deployment replica(s) within kubernetes. Note this config also assumes the api chart is running in the ``default`` namespace:
+
+```yaml
+scrape_configs:
+- job_name: rust-restapi
+  scrape_interval: 10s
+  scrape_timeout: 5s
+  metrics_path: /metrics
+  scheme: https
+  tls_config:
+    insecure_skip_verify: true
+  static_configs:
+  - targets:
+    - rust-restapi.default.svc.cluster.local:3000
 ```
 
 ## Supported APIs
@@ -226,3 +357,8 @@ This project focused on integration tests for v1 instead of only rust tests (spe
 
 Please refer to the [Integration Tests Using curl Guide](./tests/integration-using-curl.md)
 
+## Build Docs
+
+```bash
+cargo doc --features monitoring --example server
+```

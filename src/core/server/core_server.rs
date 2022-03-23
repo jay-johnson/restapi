@@ -46,13 +46,13 @@ pub async fn core_server(
     let pool = get_db_pool(&config).await;
     // 2
     let listener = match tokio::net::TcpListener::bind(
-            &config.api_config.socket_addr).await {
+            &config.api_config.socket_addr.unwrap()).await {
         Ok(v) => v,
         Err(e) => {
             let err_msg = format!("\
                 Server startup failed - unable to \
-                open server address: {} with err='{e}' - stopping",
-                config.api_config.socket_addr);
+                open server server_endpoint: {} with err='{e}' - stopping",
+                config.api_config.server_endpoint);
             error!("{err_msg}");
             panic!("{err_msg}");
         }

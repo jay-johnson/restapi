@@ -40,7 +40,7 @@ use crate::tls::get_tls_config::get_tls_config;
 /// ### Change the postgres database
 ///
 /// ```bash
-/// export SERVER_NAME_DB="mydb"
+/// export SERVER_DB_NODE_NAME="mydb"
 /// ```
 ///
 /// ### Change the user password salt for argon2 password hashing
@@ -135,17 +135,17 @@ pub async fn build_core_config(
         .unwrap_or(format!("0.0.0.0:3000"));
 
     let api_tls_mode = "tls";
-    let db_cert_name = std::env::var("SERVER_NAME_DB")
+    let db_cert_name = std::env::var("SERVER_DB_NODE_NAME")
         .unwrap_or(format!("postgres"));
     let db_conn_type = std::env::var(format!("{db_cert_name}_DB_CONN_TYPE").to_uppercase())
         .unwrap_or(format!("postgresql"));
     let db_address = std::env::var(format!("{db_cert_name}_ENDPOINT").to_uppercase())
-        .unwrap_or(format!("0.0.0.0:5432"));
+        .unwrap_or(format!("postgres.default.svc.cluster.local:5432"));
     let db_username = std::env::var(format!("{db_cert_name}_USERNAME").to_uppercase())
-        .unwrap_or(format!("postgres"));
+        .unwrap_or(format!("datawriter"));
     let db_password = std::env::var(format!("{db_cert_name}_PASSWORD").to_uppercase())
-        .unwrap_or(format!("postgres"));
-    let db_name = std::env::var("SERVER_NAME_DB")
+        .unwrap_or(format!("123321"));
+    let db_name = std::env::var("SERVER_DB_NODE_NAME")
         .unwrap_or(format!("mydb"));
     let db_tls_mode = "require";
     let server_password_salt = std::env::var("SERVER_PASSWORD_SALT")
@@ -233,11 +233,11 @@ pub async fn build_core_config(
             - public key: {token_public_key_path}\n\
             \n",
                 config.server_address,
-                config.server_address,
-                config.db_address,
                 config.api_config.ca_path,
                 config.api_config.cert_path,
-                config.api_config.key_path);
+                config.api_config.key_path,
+                config.server_address,
+                config.db_address);
     }
 
     return Ok(config);

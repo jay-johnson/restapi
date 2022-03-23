@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-restapi
+  labels:
+    app: rust-restapi
+spec:
+  selector:
+    app: rust-restapi
+  ports:
+    - name: http-rust-restapi
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-restapi-ext
+  labels:
+    app: rust-restapi
+spec:
+  type: NodePort
+  selector:
+    app: rust-restapi
+  ports:
+    - name: http-rust-restapi-ext
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
+      nodePort: 32100
+{{- if .Values.service.monitor.enabled }}
+---
+# requires crds in the cluster
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: rust-restapi
+  labels:
+    monitoring: rust-restapi
+spec:
+  selector:
+    matchLabels:
+      app: rust-restapi
+  endpoints:
+  - port: http-rust-restapi
+{{- end }}

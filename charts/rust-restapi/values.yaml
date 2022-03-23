@@ -1,0 +1,10 @@
+image:
+  repository: jayjohnson/rust-restapi
+  # repository: jayjohnson/rust-restapi-base
+  tag: latest
+  pullPolicy: Always
+
+service:
+  port: 3000
+  monitor:
+    enabled: true

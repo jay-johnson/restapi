@@ -1,0 +1,156 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rust-restapi
+spec:
+  selector:
+    matchLabels:
+      app: rust-restapi
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: rust-restapi
+    spec:
+      containers:
+      - name: rust-restapi
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        ports:
+        - containerPort: 3000
+        command:
+        - sh
+        - -c
+        - |
+          #!/usr/bin/env bash -e
+          cd /server
+          echo "starting up"
+          echo "/server/target/release/examples/server"
+          /server/target/release/examples/server
+        env:
+        # api
+        - name: SERVER_NAME_API
+          value: api
+        - name: API_ENDPOINT
+          value: 0.0.0.0:3000
+        - name: API_TLS_DIR
+          value: /server/certs/tls/api
+        - name: API_TLS_CA
+          value: /server/certs/tls/api/api-ca.pem
+        - name: API_TLS_CERT
+          value: /server/certs/tls/api/api.crt
+        - name: API_TLS_KEY
+          value: /server/certs/tls/api/api.key
+        # db
+        - name: POSTGRES_TLS_DIR
+          value: /server/certs/tls/postgres
+        - name: POSTGRES_TLS_CA
+          value: /server/certs/tls/postgres/postgres-ca.pem
+        - name: POSTGRES_TLS_CERT
+          value: /server/certs/tls/postgres/postgres.crt
+        - name: POSTGRES_TLS_KEY
+          value: /server/certs/tls/postgres/postgres.key
+        - name: POSTGRES_DB_CONN_TYPE
+          value: postgresql
+        - name: POSTGRES_ENDPOINT
+          value: postgres.default.svc.cluster.local:5432
+        - name: POSTGRES_USERNAME
+          value: datawriter
+        - name: POSTGRES_PASSWORD
+          value: "123321"
+        # s3
+        - name: S3_DATA_BUCKET
+          value: YOUR_BUCKET
+        - name: S3_DATA_PREFIX
+          value: /rust-restapi/tests
+        - name: S3_STORAGE_CLASS
+          value: STANDARD
+        # disable s3 uploads by setting to "1"
+        - name: S3_DATA_UPLOAD_TO_S3
+          value: "0"
+        # jwt
+        - name: TOKEN_EXPIRATION_SECONDS_INTO_FUTURE
+          # 30 days
+          value: "2592000"
+          # 7 days
+          # value: "604800"
+          # 1 days
+          # value: "86400"
+        - name: TOKEN_ORG
+          value: example.org
+        - name: TOKEN_HEADER
+          value: Bearer
+        - name: TOKEN_ALGO_PRIVATE_KEY
+          # must be in pkcs8 format
+          value: /server/certs/tls/jwt/private-key.pem
+        - name: TOKEN_ALGO_PUBLIC_KEY
+          value: /server/certs/tls/jwt/public-key.pem
+        - name: SERVER_PKI_DIR_JWT
+          value: /server/certs/tls/jwt
+        # auth
+        - name: USER_EMAIL_VERIFICATION_REQUIRED
+          # by setting to "0" this allows unverified user's login
+          value: "0"
+        - name: USER_EMAIL_VERIFICATION_ENABLED
+          value: "1"
+        - name: USER_EMAIL_VERIFICATION_EXP_IN_SECONDS
+          # 30 days
+          value: "2592000"
+          # 7 days
+          # value: "604800"
+          # 1 days
+          # value: "86400"
+        - name: USER_OTP_EXP_IN_SECONDS
+          # 30 days
+          value: "2592000"
+          # 7 days
+          # value: "604800"
+          # 1 days
+          # value: "86400"
+        - name: SERVER_PASSWORD_SALT
+          value: 694bbbd3-a553-4e95-a5d9-d3673084a123
+        # tracking in logs
+        - name: SERVER_NAME_LABEL
+          value: rust-restapi
+        # debugging
+        - name: RUST_BACKTRACE
+          value: "1"
+        - name: RUST_LOG
+          value: info
+        - name: DEBUG
+          value: "1"
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: {{ .Values.service.port | default 3000 }}
+            scheme: HTTPS
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: {{ .Values.service.port | default 3000 }}
+            scheme: HTTPS
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: "/server/certs/tls/api"
+          name: rust-restapi-tls-api
+          readOnly: true
+        - mountPath: "/server/certs/tls/db"
+          name: rust-restapi-tls-db
+          readOnly: true
+        - mountPath: "/server/certs/tls/jwt"
+          name: rust-restapi-jwt-keys
+          readOnly: true
+      # end of containers
+      volumes:
+        - name: rust-restapi-tls-api
+          secret:
+            secretName: rust-restapi-tls-api
+        - name: rust-restapi-tls-db
+          secret:
+            secretName: rust-restapi-tls-db
+        - name: rust-restapi-jwt-keys
+          secret:
+            secretName: rust-restapi-jwt-keys

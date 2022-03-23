@@ -144,13 +144,23 @@ pub async fn get_tls_config(
         server_config
     };
 
+
+
     let config = tls_config::TlsConfig {
         enabled: tls_enabled,
         cert_path: tls_cert,
         key_path: tls_key,
         ca_path: tls_ca,
+        // mtls client tls assets
+        client_cert_path: format!(""),
+        client_key_path: format!(""),
+        client_ca_path: format!(""),
         mode: format!("{mode}"),
-        socket_addr: server_address.parse::<std::net::SocketAddr>().unwrap(),
+        socket_addr: match server_address.parse::<std::net::SocketAddr>() {
+            Ok(sa) => Some(sa),
+            Err(_) => None,
+        },
+        server_endpoint: server_address.to_string(),
         server_config: server_config,
     };
 

@@ -209,7 +209,7 @@ pub async fn get_user(
             &conn).await {
         Ok(user_model) => {
             let response = Response::builder()
-                .status(201)
+                .status(200)
                 .body(Body::from(
                     serde_json::to_string(
                         &ApiResUserGet {
