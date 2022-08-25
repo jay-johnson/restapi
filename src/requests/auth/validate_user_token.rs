@@ -3,8 +3,8 @@ use postgres_native_tls::MakeTlsConnector;
 use bb8::PooledConnection;
 use bb8_postgres::PostgresConnectionManager;
 
-use hyper::HeaderMap;
 use hyper::header::HeaderValue;
+use hyper::HeaderMap;
 
 use crate::core::core_config::CoreConfig;
 
@@ -50,76 +50,72 @@ pub async fn validate_user_token(
     config: &CoreConfig,
     conn: &PooledConnection<'_, PostgresConnectionManager<MakeTlsConnector>>,
     headers: &HeaderMap<HeaderValue>,
-    user_id: i32)
--> Result<String, String>
-{
-    let token_header_key = std::env::var("TOKEN_HEADER")
-        .unwrap_or(String::from("Bearer"));
-    let (
-        valid_user,
-        user_model) = match get_user_by_id(
-            tracking_label,
-            user_id,
-            conn).await {
-        Ok(user_model) => {
-            match user_model.state {
-                // only active users are allowed
-                // users.state = 0 (active)
-                0 => {
-                    (true, user_model)
-                },
-                // users.state != 0 (inactive/invalid)
-                _ => {
-                    let err_msg = format!("\
-                        {tracking_label} user_id={user_id} \
-                        is not active");
-                    error!("{err_msg}");
-                    return Err(format!("INVALID"));
+    user_id: i32,
+) -> Result<String, String> {
+    let token_header_key =
+        std::env::var("TOKEN_HEADER").unwrap_or_else(|_| "Bearer".to_string());
+    let (valid_user, user_model) =
+        match get_user_by_id(tracking_label, user_id, conn).await {
+            Ok(user_model) => {
+                match user_model.state {
+                    // only active users are allowed
+                    // users.state = 0 (active)
+                    0 => (true, user_model),
+                    // users.state != 0 (inactive/invalid)
+                    _ => {
+                        let err_msg = format!(
+                            "{tracking_label} user_id={user_id} \
+                            is not active"
+                        );
+                        error!("{err_msg}");
+                        return Err("INVALID".to_string());
+                    }
                 }
             }
-        },
-        Err(err_msg) => {
-            return Err(err_msg);
-        },
-    };
-    if ! valid_user {
-        let err_msg = format!("\
-            {tracking_label} token validation failed - user_id={user_id} \
-            is not valid");
+            Err(err_msg) => {
+                return Err(err_msg);
+            }
+        };
+    if !valid_user {
+        let err_msg = format!(
+            "{tracking_label} token validation failed - user_id={user_id} \
+            is not valid"
+        );
         error!("{err_msg}");
-        return Err(format!("INVALID"));
+        return Err("INVALID".to_string());
     }
     if headers.contains_key(&token_header_key) {
         let user_email = user_model.email.clone();
         let token = headers.get(&token_header_key).unwrap().to_str().unwrap();
         /*
-        info!("\
-            {tracking_label} validating user {user_id} \
+        info!("{tracking_label} validating user {user_id} \
             token={token}");
         */
         match jwt_api::validate_token(
-                &tracking_label,
-                &token,
-                &user_email,
-                &config.decoding_key_bytes).await {
-            Ok(_) => {
-                return Ok(format!("{token}"));
-            },
+            tracking_label,
+            token,
+            &user_email,
+            &config.decoding_key_bytes,
+        )
+        .await
+        {
+            Ok(_) => Ok(token.to_string()),
             Err(e) => {
-                let err_msg = format!("\
-                    {tracking_label} token validation failed for {user_email} \
-                    err={e}");
+                let err_msg = format!(
+                    "{tracking_label} token validation failed for {user_email} \
+                    err={e}"
+                );
                 error!("{err_msg}");
-                return Err(format!("INVALID"));
+                Err("INVALID".to_string())
             }
         }
-    }
-    else {
-        let err_msg = format!("\
-            {tracking_label} \
+    } else {
+        let err_msg = format!(
+            "{tracking_label} \
             token validation failed missing header key={token_header_key} \
-            for {user_id} request");
+            for {user_id} request"
+        );
         error!("{err_msg}");
-        return Err(format!("INVALID"));
+        Err("INVALID".to_string())
     }
 }

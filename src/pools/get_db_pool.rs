@@ -1,5 +1,5 @@
-use native_tls::TlsConnector;
 use native_tls::Certificate as native_tls_cert;
+use native_tls::TlsConnector;
 use postgres_native_tls::MakeTlsConnector;
 
 use bb8::Pool;
@@ -11,7 +11,7 @@ use crate::core::core_config::CoreConfig;
 ///
 /// Build a bb8 threadpool ([`Pool](bb8::Pool)) providing a
 /// [`PostgresConnectionManager`](bb8_postgres::PostgresConnectionManager)
-/// client with tls encryption implemented using 
+/// client with tls encryption implemented using
 /// [`MakeTlsConnector`](postgres_native_tls::MakeTlsConnector)
 ///
 /// # Arguments
@@ -36,9 +36,8 @@ use crate::core::core_config::CoreConfig;
 /// ```
 ///
 pub async fn get_db_pool(
-    config: &CoreConfig)
--> Pool<PostgresConnectionManager<MakeTlsConnector>>
-{
+    config: &CoreConfig,
+) -> Pool<PostgresConnectionManager<MakeTlsConnector>> {
     let ca_bytes = std::fs::read(&config.db_config.ca_path).unwrap();
     let db_tls_ca = native_tls_cert::from_pem(&ca_bytes).unwrap();
     // use the certificate authority file
@@ -47,42 +46,41 @@ pub async fn get_db_pool(
         .build()
         .unwrap();
     let connector = MakeTlsConnector::new(connector);
-    let db_conn_no_password = format!("\
-        {}://{}:REDACTED@{}/{}?\
+    let db_conn_no_password = format!(
+        "{}://{}:REDACTED@{}/{}?\
         sslmode=require",
         config.db_conn_type,
         config.db_username,
         config.db_address,
-        config.db_name);
-    let db_conn_str = format!("\
-        {}://{}:{}@{}/{}?\
+        config.db_name
+    );
+    let db_conn_str = format!(
+        "{}://{}:{}@{}/{}?\
         sslmode=require",
         config.db_conn_type,
         config.db_username,
         config.db_password,
         config.db_address,
-        config.db_name);
-    info!("\
-        connecting to postgres: {db_conn_no_password} \
+        config.db_name
+    );
+    info!(
+        "connecting to postgres: {db_conn_no_password} \
         with db_tls_ca={}",
-        config.db_config.ca_path);
-    let pg_mgr = PostgresConnectionManager::new_from_stringlike(
-        db_conn_str,
-        connector,
-    )
-    .unwrap();
+        config.db_config.ca_path
+    );
+    let pg_mgr =
+        PostgresConnectionManager::new_from_stringlike(db_conn_str, connector)
+            .unwrap();
 
-    let pool = match Pool::builder().build(pg_mgr).await {
-        Ok(pool) => {
-            pool
-        },
+    match Pool::builder().build(pg_mgr).await {
+        Ok(pool) => pool,
         Err(e) => {
-            panic!("\
-                bb8 db threadpool hit an error '{e}' \
+            panic!(
+                "bb8 db threadpool hit an error '{e}' \
                 connecting to {db_conn_no_password} \
                 with db_tls_ca={}",
-                config.db_config.ca_path)
-        },
-    };
-    return pool;
+                config.db_config.ca_path
+            )
+        }
+    }
 }

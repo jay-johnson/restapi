@@ -64,9 +64,8 @@ pub async fn upsert_user_verification(
     email: &str,
     is_new_user: bool,
     verified: i32,
-    conn: &PooledConnection<'_, PostgresConnectionManager<MakeTlsConnector>>)
--> Result<String, String>
-{
+    conn: &PooledConnection<'_, PostgresConnectionManager<MakeTlsConnector>>,
+) -> Result<String, String> {
     // create the new email verification token value
     let token = get_uuid();
     let user_verified_value = match is_verification_enabled() {
@@ -75,9 +74,11 @@ pub async fn upsert_user_verification(
     };
     let user_verification_expiration_in_seconds_str =
         std::env::var("USER_EMAIL_VERIFICATION_EXP_IN_SECONDS")
-        .unwrap_or(String::from("2592000"));
+            .unwrap_or_else(|_| "2592000".to_string());
     let user_verification_expiration_in_seconds: i64 =
-        user_verification_expiration_in_seconds_str.parse::<i64>().unwrap();
+        user_verification_expiration_in_seconds_str
+            .parse::<i64>()
+            .unwrap();
     let now = Utc::now();
     // https://docs.rs/chrono/0.4.19/chrono/struct.Duration.html#method.seconds
     let verification_expiration_timestamp =
@@ -94,20 +95,22 @@ pub async fn upsert_user_verification(
     //    UPDATE SET email = EXCLUDED.email || ';' || users_verified.email;
 
     // set the users.email + users.verified = 0
-    if ! is_new_user {
-        let query = format!("\
-            UPDATE \
+    if !is_new_user {
+        let query = format!(
+            "UPDATE \
                 users \
             SET \
                 email = '{email}', \
                 verified = {verified} \
             WHERE \
-                users.id = {user_id};");
-        info!("\
-            {tracking_label} - \
+                users.id = {user_id};"
+        );
+        info!(
+            "{tracking_label} - \
             trying to set existing user {user_id} \
             email={email} \
-            with query='{query}'");
+            with query='{query}'"
+        );
         let stmt = conn.prepare(&query).await.unwrap();
         let _ = match conn.query(&stmt, &[]).await {
             Ok(query_result) => query_result,
@@ -115,11 +118,11 @@ pub async fn upsert_user_verification(
                 let err_msg = format!("{e}");
                 if err_msg.contains("duplicate key value violates") {
                     return Err(format!("{email} is already in use"));
-                }
-                else {
-                    return Err(format!("\
-                        failed updaing user.email={email}, user.verified \
-                        with err={e}"));
+                } else {
+                    return Err(format!(
+                        "failed updaing user.email={email}, user.verified \
+                        with err={e}"
+                    ));
                 }
             }
         };
@@ -127,8 +130,8 @@ pub async fn upsert_user_verification(
 
     let query = match is_new_user {
         true => {
-            format!("\
-                INSERT INTO \
+            format!(
+                "INSERT INTO \
                     users_verified (\
                         user_id, \
                         token, \
@@ -140,11 +143,12 @@ pub async fn upsert_user_verification(
                     '{token}', \
                     '{email}', \
                     {user_verified_value}, \
-                    '{verification_expiration_timestamp}');")
-        },
+                    '{verification_expiration_timestamp}');"
+            )
+        }
         false => {
-            format!("\
-                UPDATE \
+            format!(
+                "UPDATE \
                     users_verified \
                 SET \
                     email = '{email}',
@@ -153,16 +157,18 @@ pub async fn upsert_user_verification(
                     exp_date = '{verification_expiration_timestamp}', \
                     verify_date = NULL \
                 WHERE \
-                    users_verified.user_id = {user_id};")
+                    users_verified.user_id = {user_id};"
+            )
         }
     };
-    info!("\
-        {tracking_label} - \
+    info!(
+        "{tracking_label} - \
         upserting user_verified {user_id} \
         new_user={is_new_user} \
         verified={user_verified_value} \
         email to {email} \
-        with query='{query}'");
+        with query='{query}'"
+    );
     let stmt = conn.prepare(&query).await.unwrap();
     let _ = match conn.query(&stmt, &[]).await {
         Ok(query_result) => query_result,
@@ -170,14 +176,14 @@ pub async fn upsert_user_verification(
             let err_msg = format!("{e}");
             if err_msg.contains("duplicate key value violates") {
                 return Err(format!("{email} is already in use"));
-            }
-            else {
-                return Err(format!("\
-                    failed updaing user.email={email}, user.verified \
-                    with err={e}"));
+            } else {
+                return Err(format!(
+                    "failed updaing user.email={email}, user.verified \
+                    with err={e}"
+                ));
             }
         }
     };
 
-    return Ok(token);
+    Ok(token)
 }

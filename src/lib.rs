@@ -126,6 +126,7 @@
 //!
 //! Environment Variable  | Default
 //! --------------------- | -------
+//! DB_NAME               | mydb
 //! POSTGRES_USERNAME     | datawriter
 //! POSTGRES_PASSWORD     | "123321"
 //! POSTGRES_ENDPOINT     | 0.0.0.0:5432
@@ -631,6 +632,17 @@
 //! SELECT table_name FROM information_schema.tables WHERE table_schema='public';
 //! ```
 //!
+//! ## Podman Image Push
+//!
+//! ```bash
+//! cur_tag=$(cat Cargo.toml | grep version | head -1 | sed -e 's/"//g' | awk '{print $NF}')
+//! podman push IMAGE_ID "docker://docker.io/jayjohnson/rust-restapi:${cur_tag}"
+//! ```
+//!
+//! ## Helm Chart
+//!
+//! Please refer to the [Deploying the Rust Rest API helm chart into kubernetes guide](https://github.com/jay-johnson/restapi/blob/main/charts/rust-restapi/README.md) for deploying the example helm chart into a kubernetes cluster.
+//!
 //! ## Build Docs
 //!
 //! ```bash
@@ -640,9 +652,9 @@
 extern crate pretty_env_logger;
 #[macro_use]
 extern crate log;
+extern crate chrono;
 extern crate serde;
 extern crate serde_json;
-extern crate chrono;
 extern crate uuid;
 
 // include files and sub directories
@@ -650,8 +662,8 @@ pub mod core;
 pub mod handle_request;
 pub mod is3;
 pub mod jwt;
+pub mod monitoring;
 pub mod pools;
 pub mod requests;
 pub mod tls;
 pub mod utils;
-pub mod monitoring;

@@ -25,7 +25,6 @@ pub struct TlsInfo {
 
 /// tls info trait for a hyper Service
 impl TlsInfo {
-
     /// from_tls_connection
     ///
     /// extract client tls information from the hyper [`Request`](hyper::Request) and
@@ -35,11 +34,12 @@ impl TlsInfo {
     ///
     /// * `conn` - [`ServerConnection`](rustls::ServerConnection) for extracting client tls information from the received hyper [`Request`](hyper::Request)
     ///
-    pub fn from_tls_connection(conn: &ServerConnection) -> TlsInfo
-    {
+    pub fn from_tls_connection(conn: &ServerConnection) -> TlsInfo {
         TlsInfo {
             sni_hostname: conn.sni_hostname().map(|s| s.to_owned()),
-            alpn_protocol: conn.alpn_protocol().map(|s| String::from_utf8_lossy(s).into_owned()),
+            alpn_protocol: conn
+                .alpn_protocol()
+                .map(|s| String::from_utf8_lossy(s).into_owned()),
             ciphersuite: conn.negotiated_cipher_suite(),
             version: conn.protocol_version(),
         }

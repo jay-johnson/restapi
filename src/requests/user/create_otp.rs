@@ -16,19 +16,19 @@ use postgres_native_tls::MakeTlsConnector;
 use bb8::Pool;
 use bb8_postgres::PostgresConnectionManager;
 
-use hyper::Body;
-use hyper::Response;
-use hyper::HeaderMap;
 use hyper::header::HeaderValue;
+use hyper::Body;
+use hyper::HeaderMap;
+use hyper::Response;
 
-use serde::Serialize;
 use serde::Deserialize;
+use serde::Serialize;
 
 use crate::core::core_config::CoreConfig;
 use crate::utils::get_uuid::get_uuid;
 
-use crate::requests::models::user::get_user_by_id;
 use crate::requests::auth::validate_user_token::validate_user_token;
+use crate::requests::models::user::get_user_by_id;
 
 /// ApiReqUserCreateOtp
 ///
@@ -145,67 +145,64 @@ pub async fn create_otp(
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
     headers: &HeaderMap<HeaderValue>,
-    bytes: &[u8])
--> std::result::Result<Response<Body>, Infallible>
-{
-    let req_object: ApiReqUserCreateOtp = match serde_json::from_slice(&bytes) {
+    bytes: &[u8],
+) -> std::result::Result<Response<Body>, Infallible> {
+    let req_object: ApiReqUserCreateOtp = match serde_json::from_slice(bytes) {
         Ok(uo) => uo,
         Err(_) => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserCreateOtp {
-                            user_id: -1,
-                            token: format!(""),
-                            exp_date: format!(""),
-                            msg: format!("\
-                                User create one-time-password failed - \
-                                please ensure \
-                                user_id and email \
-                                were set correctly in the request"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserCreateOtp {
+                        user_id: -1,
+                        token: "".to_string(),
+                        exp_date: "".to_string(),
+                        msg: ("User create one-time-password failed - \
+                            please ensure \
+                            user_id and email \
+                            were set correctly in the request")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
     };
 
     // is this a waste of time because nothing changed
-    if
-            req_object.user_id < 0 {
+    if req_object.user_id <= 0 {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserCreateOtp {
-                        user_id: req_object.user_id,
-                        token: format!(""),
-                        exp_date: format!(""),
-                        msg: format!("\
-                            User create one-time-password failed \
-                            please ensure \
-                            user_id is a non-negative number"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserCreateOtp {
+                    user_id: req_object.user_id,
+                    token: "".to_string(),
+                    exp_date: "".to_string(),
+                    msg: ("User create one-time-password failed \
+                        please ensure \
+                        user_id is a non-negative number")
+                        .to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
-    }
-    else if req_object.email == "" {
+    } else if req_object.email.is_empty() {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserCreateOtp {
-                        user_id: req_object.user_id,
-                        token: format!(""),
-                        exp_date: format!(""),
-                        msg: format!("\
-                            User create one-time-password failed \
-                            please ensure \
-                            email is set to the user's email address"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserCreateOtp {
+                    user_id: req_object.user_id,
+                    token: "".to_string(),
+                    exp_date: "".to_string(),
+                    msg: ("User create one-time-password failed \
+                        please ensure \
+                        email is set to the user's email address")
+                        .to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
@@ -216,84 +213,86 @@ pub async fn create_otp(
     let user_id = user_clone.user_id;
     let user_email = user_clone.email;
     let _token = match validate_user_token(
-            tracking_label,
-            &config,
-            &conn,
-            headers,
-            user_id).await {
+        tracking_label,
+        config,
+        &conn,
+        headers,
+        user_id,
+    )
+    .await
+    {
         Ok(_token) => _token,
         Err(_) => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserCreateOtp {
-                            user_id: req_object.user_id,
-                            token: format!(""),
-                            exp_date: format!(""),
-                            msg: format!("\
-                                User create one-time-password failed \
-                                due to invalid token"),
-                        }
-                    ).unwrap()))
-            .unwrap();
+                    serde_json::to_string(&ApiResUserCreateOtp {
+                        user_id: req_object.user_id,
+                        token: "".to_string(),
+                        exp_date: "".to_string(),
+                        msg: ("User create one-time-password failed \
+                            due to invalid token")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
+                .unwrap();
             return Ok(response);
         }
     };
 
     // get the user and detect if the email is different
-    let user_model = match get_user_by_id(
-            tracking_label,
-            user_id,
-            &conn).await {
-        Ok(user_model) => {
-            user_model
-        },
+    let user_model = match get_user_by_id(tracking_label, user_id, &conn).await
+    {
+        Ok(user_model) => user_model,
         Err(err_msg) => {
-            error!("\
-                {tracking_label} - \
+            error!(
+                "{tracking_label} - \
                 failed to create one-time-password user {user_id} \
-                with err='{err_msg}'");
+                with err='{err_msg}'"
+            );
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserCreateOtp {
-                            user_id: req_object.user_id,
-                            token: format!(""),
-                            exp_date: format!(""),
-                            msg: format!("\
-                                User create one-time-password failed - \
-                                unable to find user with id: {user_id}"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserCreateOtp {
+                        user_id: req_object.user_id,
+                        token: "".to_string(),
+                        exp_date: "".to_string(),
+                        msg: format!(
+                            "User create one-time-password failed - \
+                            unable to find user with id: {user_id}"
+                        ),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
-        },
+        }
     };
 
     if user_model.email != req_object.email {
-            let response = Response::builder()
-                .status(400)
-                .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserCreateOtp {
-                            user_id: req_object.user_id,
-                            token: format!(""),
-                            exp_date: format!(""),
-                            msg: format!("\
-                                User create one-time-password failed - \
-                                user_email does not match {}",
-                                    req_object.email),
-                        }
-                    ).unwrap()))
-                .unwrap();
-            return Ok(response);
+        let response = Response::builder()
+            .status(400)
+            .body(Body::from(
+                serde_json::to_string(&ApiResUserCreateOtp {
+                    user_id: req_object.user_id,
+                    token: "".to_string(),
+                    exp_date: "".to_string(),
+                    msg: format!(
+                        "User create one-time-password failed - \
+                        user_email does not match {}",
+                        req_object.email
+                    ),
+                })
+                .unwrap(),
+            ))
+            .unwrap();
+        return Ok(response);
     }
 
     let user_otp_expiration_in_seconds_str =
         std::env::var("USER_OTP_EXP_IN_SECONDS")
-        .unwrap_or(String::from("2592000"));
+            .unwrap_or_else(|_| "2592000".to_string());
     let user_otp_expiration_in_seconds: i64 =
         user_otp_expiration_in_seconds_str.parse::<i64>().unwrap();
     let now = chrono::Utc::now();
@@ -301,13 +300,10 @@ pub async fn create_otp(
     let otp_expiration_timestamp =
         now + chrono::Duration::seconds(user_otp_expiration_in_seconds);
 
-    let otp_token = format!("\
-        {}{}",
-        get_uuid(),
-        get_uuid());
+    let otp_token = format!("{}{}", get_uuid(), get_uuid());
 
-    let cur_query = format!("\
-        INSERT INTO \
+    let cur_query = format!(
+        "INSERT INTO \
             users_otp (\
                 user_id, \
                 token, \
@@ -326,7 +322,8 @@ pub async fn create_otp(
             users_otp.token, \
             users_otp.email, \
             users_otp.state, \
-            users_otp.exp_date;");
+            users_otp.exp_date;"
+    );
 
     let stmt = conn.prepare(&cur_query).await.unwrap();
     let query_result = match conn.query(&stmt, &[]).await {
@@ -335,62 +332,61 @@ pub async fn create_otp(
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserCreateOtp {
-                            user_id: req_object.user_id,
-                            token: format!(""),
-                            exp_date: format!(""),
-                            msg: format!("\
-                                User create one-time-password failed \
-                                for user_id={user_id} {user_email} \
-                                with err='{e}'")
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserCreateOtp {
+                        user_id: req_object.user_id,
+                        token: "".to_string(),
+                        exp_date: "".to_string(),
+                        msg: format!(
+                            "User create one-time-password failed \
+                            for user_id={user_id} {user_email} \
+                            with err='{e}'"
+                        ),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
-        },
+        }
     };
 
     // must match up with RETURNING
-    for row in query_result.iter() {
+    if let Some(row) = query_result.first() {
         let user_otp_id: i32 = row.try_get("id").unwrap();
         let user_otp_token: String = row.try_get("token").unwrap();
         let user_otp_exp_date_str: String = match row.try_get("exp_date") {
             Ok(v) => {
                 let user_otp_exp_date: chrono::DateTime<chrono::Utc> = v;
                 format!("{}", user_otp_exp_date.format("%Y-%m-%dT%H:%M:%SZ"))
-            },
-            Err(_) => {
-                format!("")
             }
+            Err(_) => "".to_string(),
         };
         let response = Response::builder()
             .status(201)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserCreateOtp {
-                        user_id: user_otp_id,
-                        token: user_otp_token,
-                        exp_date: user_otp_exp_date_str,
-                        msg: format!("success"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserCreateOtp {
+                    user_id: user_otp_id,
+                    token: user_otp_token,
+                    exp_date: user_otp_exp_date_str,
+                    msg: "success".to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
     let response = Response::builder()
         .status(400)
         .body(Body::from(
-            serde_json::to_string(
-                &ApiResUserCreateOtp {
-                    user_id: req_object.user_id,
-                    token: format!(""),
-                    exp_date: format!(""),
-                    msg: format!("\
-                        User create one-time-password failed - \
-                        no records found in db"),
-                }
-            ).unwrap()))
+            serde_json::to_string(&ApiResUserCreateOtp {
+                user_id: req_object.user_id,
+                token: "".to_string(),
+                exp_date: "".to_string(),
+                msg: ("User create one-time-password failed - \
+                    no records found in db")
+                    .to_string(),
+            })
+            .unwrap(),
+        ))
         .unwrap();
-    return Ok(response);
+    Ok(response)
 }

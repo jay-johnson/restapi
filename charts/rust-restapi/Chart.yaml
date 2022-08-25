@@ -1,13 +1,13 @@
-name: restapi
+name: rust-restapi
 description: A secure-by-default rest api stack implemented with hyper, tokio, bb8 and postgres with prometheus monitoring. This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed. Includes a working user management and authentication backend written in postgresql with async S3 uploading for POST-ed data files.
+apiVersion: v2
+appVersion: 1.1.4
+version: 1.1.4
+engine: gotpl
+type: application
 home: https://docs.rs/restapi/latest/restapi/
 sources:
 - https://github.com/jay-johnson/restapi
 maintainers:
 - name: Jay Johnson
   email: jay.p.h.johnson@gmail.com
-apiVersion: v2
-engine: gotpl
-appVersion: 1.0.0
-version: 1.0.0
-type: application

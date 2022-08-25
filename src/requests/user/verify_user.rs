@@ -19,8 +19,8 @@ use bb8_postgres::PostgresConnectionManager;
 use hyper::Body;
 use hyper::Response;
 
-use serde::Serialize;
 use serde::Deserialize;
+use serde::Serialize;
 
 use crate::core::core_config::CoreConfig;
 
@@ -168,36 +168,33 @@ pub async fn verify_user(
     tracking_label: &str,
     _config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
-    full_url: &str)
--> std::result::Result<Response<Body>, Infallible>
-{
+    full_url: &str,
+) -> std::result::Result<Response<Body>, Infallible> {
     // get query params as a hashmap
-    let params_map = match get_query_params_from_url(
-            &tracking_label,
-            &full_url).await {
-        Ok(params_map) => params_map,
-        Err(_) => {
-            let response = Response::builder()
-                .status(400)
-                .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserVerify {
+    let params_map =
+        match get_query_params_from_url(tracking_label, full_url).await {
+            Ok(params_map) => params_map,
+            Err(_) => {
+                let response = Response::builder()
+                    .status(400)
+                    .body(Body::from(
+                        serde_json::to_string(&ApiResUserVerify {
                             user_id: -1,
-                            email: format!(""),
+                            email: "".to_string(),
                             state: -1,
                             verified: -1,
-                            role: format!(""),
-                            msg: format!("Missing required query params"),
-                        }
-                    ).unwrap()))
-                .unwrap();
-            return Ok(response);
-        },
-    };
+                            role: "".to_string(),
+                            msg: ("Missing required query params").to_string(),
+                        })
+                        .unwrap(),
+                    ))
+                    .unwrap();
+                return Ok(response);
+            }
+        };
 
     /*
-    info!("\
-        {tracking_label} - \
+    info!("{tracking_label} - \
         verify user - start - \
         params map: {:?}",
             params_map);
@@ -208,70 +205,69 @@ pub async fn verify_user(
         Some(user_id_str) => {
             let user_id: i32 = user_id_str.parse::<i32>().unwrap_or(-1);
             user_id
-        },
+        }
         None => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserVerify {
-                            user_id: -1,
-                            email: format!(""),
-                            state: -1,
-                            verified: -1,
-                            role: format!(""),
-                            msg: format!("Missing required query param: user id"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserVerify {
+                        user_id: -1,
+                        email: "".to_string(),
+                        state: -1,
+                        verified: -1,
+                        role: "".to_string(),
+                        msg: ("Missing required query param: user id")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
-        },
+        }
     };
 
     // get user_id from t=verify_token
     let verify_token: String = match params_map.get("t") {
-        Some(verify_token) => {
-            format!("{verify_token}")
-        },
+        Some(verify_token) => verify_token.to_string(),
         None => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserVerify {
-                            user_id: -1,
-                            email: format!(""),
-                            state: -1,
-                            verified: -1,
-                            role: format!(""),
-                            msg: format!("\
-                                User verify failed - please ensure \
-                                the verify token is correct and reach out \
-                                to support for additional help"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserVerify {
+                        user_id: -1,
+                        email: "".to_string(),
+                        state: -1,
+                        verified: -1,
+                        role: "".to_string(),
+                        msg: ("User verify failed - please ensure \
+                            the verify token is correct and reach out \
+                            to support for additional help")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
-        },
+        }
     };
 
     if user_id <= 0 {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserVerify {
-                        user_id: -1,
-                        email: format!(""),
-                        state: -1,
-                        verified: -1,
-                        role: format!(""),
-                        msg: format!("\
-                            User verify failed - please ensure \
-                            the user id must be a non-negative number \
-                            and reach out to support for additional help"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserVerify {
+                    user_id: -1,
+                    email: "".to_string(),
+                    state: -1,
+                    verified: -1,
+                    role: "".to_string(),
+                    msg: ("User verify failed - please ensure \
+                        the user id must be a non-negative number \
+                        and reach out to support for additional help")
+                        .to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
@@ -281,41 +277,42 @@ pub async fn verify_user(
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserVerify {
-                        user_id: -1,
-                        email: format!(""),
-                        state: -1,
-                        verified: -1,
-                        role: format!(""),
-                        msg: format!("\
-                            User verify failed - please ensure \
-                            the verify token is valid \
-                            ({verify_token_len} is too short) \
-                            and reach out to support for additional help"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserVerify {
+                    user_id: -1,
+                    email: "".to_string(),
+                    state: -1,
+                    verified: -1,
+                    role: "".to_string(),
+                    msg: format!(
+                        "User verify failed - please ensure \
+                        the verify token is valid \
+                        ({verify_token_len} is too short) \
+                        and reach out to support for additional help"
+                    ),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
-    }
-    else if verify_token_len > 256 {
+    } else if verify_token_len > 256 {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserVerify {
-                        user_id: -1,
-                        email: format!(""),
-                        state: -1,
-                        verified: -1,
-                        role: format!(""),
-                        msg: format!("\
-                            User verify failed - please ensure \
-                            the verify token is valid \
-                            ({verify_token_len} is too long) \
-                            and reach out to support for additional help"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserVerify {
+                    user_id: -1,
+                    email: "".to_string(),
+                    state: -1,
+                    verified: -1,
+                    role: "".to_string(),
+                    msg: format!(
+                        "User verify failed - please ensure \
+                        the verify token is valid \
+                        ({verify_token_len} is too long) \
+                        and reach out to support for additional help"
+                    ),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
@@ -323,48 +320,46 @@ pub async fn verify_user(
     let conn = db_pool.get().await.unwrap();
 
     // get the user
-    let user_model = match get_user_by_id(
-            &tracking_label,
-            user_id,
-            &conn).await {
+    let user_model = match get_user_by_id(tracking_label, user_id, &conn).await
+    {
         Ok(user_model) => user_model,
         Err(_) => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserVerify {
-                            user_id: -1,
-                            email: format!(""),
-                            state: -1,
-                            verified: -1,
-                            role: format!(""),
-                            msg: format!("\
-                                User verify failed - please ensure \
-                                the parameters are correct and reach out \
-                                to support for additional help"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserVerify {
+                        user_id: -1,
+                        email: "".to_string(),
+                        state: -1,
+                        verified: -1,
+                        role: "".to_string(),
+                        msg: ("User verify failed - please ensure \
+                            the parameters are correct and reach out \
+                            to support for additional help")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
-        },
+        }
     };
 
     // check that verification is enabled
-    if ! is_verification_enabled() {
+    if !is_verification_enabled() {
         let response = Response::builder()
             .status(200)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserVerify {
-                        user_id: user_model.id,
-                        email: user_model.email,
-                        state: user_model.state,
-                        verified: user_model.verified,
-                        role: user_model.role,
-                        msg: format!("User verification success"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserVerify {
+                    user_id: user_model.id,
+                    email: user_model.email,
+                    state: user_model.state,
+                    verified: user_model.verified,
+                    role: user_model.role,
+                    msg: ("User verification success").to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
@@ -376,18 +371,19 @@ pub async fn verify_user(
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserVerify {
-                        user_id: -1,
-                        email: user_model.email,
-                        state: user_model.state,
-                        verified: user_model.verified,
-                        role: user_model.role,
-                        msg: format!("\
-                            User {user_id} is inactive - \
-                            not able to verify {user_email}"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserVerify {
+                    user_id: -1,
+                    email: user_model.email,
+                    state: user_model.state,
+                    verified: user_model.verified,
+                    role: user_model.role,
+                    msg: format!(
+                        "User {user_id} is inactive - \
+                        not able to verify {user_email}"
+                    ),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
@@ -398,89 +394,93 @@ pub async fn verify_user(
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserVerify {
-                        user_id: user_model.id,
-                        email: user_model.email,
-                        state: user_model.state,
-                        verified: user_model.verified,
-                        role: user_model.role,
-                        msg: format!("\
-                            User already verified"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserVerify {
+                    user_id: user_model.id,
+                    email: user_model.email,
+                    state: user_model.state,
+                    verified: user_model.verified,
+                    role: user_model.role,
+                    msg: ("User already verified").to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
 
     // get the verification record
     let user_verify_model = match get_user_verify_by_user_id(
-            &tracking_label,
-            user_id,
-            &conn).await {
+        tracking_label,
+        user_id,
+        &conn,
+    )
+    .await
+    {
         Ok(uvm) => uvm,
         Err(_) => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserVerify {
-                            user_id: -1,
-                            email: format!(""),
-                            state: -1,
-                            verified: -1,
-                            role: format!(""),
-                            msg: format!("\
-                                User verification record does not exist"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserVerify {
+                        user_id: -1,
+                        email: "".to_string(),
+                        state: -1,
+                        verified: -1,
+                        role: "".to_string(),
+                        msg: ("User verification record does not exist")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
     };
 
     let now: chrono::DateTime<chrono::Utc> = chrono::Utc::now();
-    let exp_vs_now_diff = now.signed_duration_since(user_verify_model.exp_date_utc);
+    let exp_vs_now_diff =
+        now.signed_duration_since(user_verify_model.exp_date_utc);
     let exp_date_vs_now = exp_vs_now_diff.num_seconds();
 
-    info!("\
-        {tracking_label} - user {user_id} verifying exp_date={} \
+    info!(
+        "{tracking_label} - user {user_id} verifying exp_date={} \
         now={} \
         num_seconds_expired={exp_date_vs_now}s",
         user_verify_model.exp_date_utc.format("%Y-%m-%dT%H:%M:%SZ"),
-        now.format("%Y-%m-%dT%H:%M:%SZ"));
+        now.format("%Y-%m-%dT%H:%M:%SZ")
+    );
 
     // check if the token is expired
     // now - exp_date > 0 == expired
     if exp_date_vs_now > 0 {
-        let err_msg = format!("\
-            {tracking_label} - user {user_id} \
+        let err_msg = format!(
+            "{tracking_label} - user {user_id} \
             verify token {verify_token} \
             expired on: \
             exp_date={} \
             duration_since={exp_date_vs_now}s",
-            user_verify_model.exp_date_utc);
+            user_verify_model.exp_date_utc
+        );
         error!("{err_msg}");
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserVerify {
-                        user_id: -1,
-                        email: format!(""),
-                        state: -1,
-                        verified: -1,
-                        role: format!(""),
-                        msg: format!("\
-                            user {user_email} verification has expired"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserVerify {
+                    user_id: -1,
+                    email: "".to_string(),
+                    state: -1,
+                    verified: -1,
+                    role: "".to_string(),
+                    msg: format!("user {user_email} verification has expired"),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
 
-    let query = format!("\
-        UPDATE \
+    let query = format!(
+        "UPDATE \
             users_verified \
         SET \
             email = '{user_email}', \
@@ -492,138 +492,144 @@ pub async fn verify_user(
             users_verified.user_id,
             users_verified.token,
             users_verified.email,
-            users_verified.state;");
+            users_verified.state;"
+    );
     let stmt = conn.prepare(&query).await.unwrap();
     let query_result = match conn.query(&stmt, &[]).await {
         Ok(query_result) => {
-            info!("\
-                {tracking_label} - \
-                user {user_id} email {user_email} token verified");
+            info!(
+                "{tracking_label} - \
+                user {user_id} email {user_email} token verified"
+            );
             query_result
-        },
+        }
         Err(e) => {
             let err_msg = format!("{e}");
-            if
-                    err_msg.contains("\
-                        db error: ERROR: duplicate key value \
-                        violates unique constraint")
-                    && err_msg.contains("users_verified_email_key")
-                    && err_msg.contains("already exists") {
+            if err_msg.contains(
+                "db error: ERROR: duplicate key value \
+                violates unique constraint",
+            ) && err_msg.contains("users_verified_email_key")
+                && err_msg.contains("already exists")
+            {
                 let response = Response::builder()
                     .status(400)
                     .body(Body::from(
-                        serde_json::to_string(
-                            &ApiResUserVerify {
-                                user_id: -1,
-                                email: format!(""),
-                                state: -1,
-                                verified: -1,
-                                role: format!(""),
-                                msg: format!("\
-                                    User email is already \
-                                    in use: {user_email}")
-                            }
-                        ).unwrap()))
+                        serde_json::to_string(&ApiResUserVerify {
+                            user_id: -1,
+                            email: "".to_string(),
+                            state: -1,
+                            verified: -1,
+                            role: "".to_string(),
+                            msg: format!(
+                                "User email is already \
+                                in use: {user_email}"
+                            ),
+                        })
+                        .unwrap(),
+                    ))
                     .unwrap();
                 return Ok(response);
-            }
-            else {
+            } else {
                 let response = Response::builder()
                     .status(400)
                     .body(Body::from(
-                        serde_json::to_string(
-                            &ApiResUserVerify {
-                                user_id: -1,
-                                email: format!(""),
-                                state: -1,
-                                verified: -1,
-                                role: format!(""),
-                                msg: format!("\
-                                    User update failed for user_id={user_id} {user_email} \
-                                    with err='{err_msg}'")
-                            }
-                        ).unwrap()))
+                        serde_json::to_string(&ApiResUserVerify {
+                            user_id: -1,
+                            email: "".to_string(),
+                            state: -1,
+                            verified: -1,
+                            role: "".to_string(),
+                            msg: format!(
+                                "User update failed for user_id={user_id} \
+                                    {user_email} \
+                                    with err='{err_msg}'"
+                            ),
+                        })
+                        .unwrap(),
+                    ))
                     .unwrap();
                 return Ok(response);
             }
         }
     };
 
-    let query = format!("\
-        UPDATE \
+    let query = format!(
+        "UPDATE \
             users \
         SET \
             verified = 1 \
         WHERE \
-            users.id = {user_id};");
+            users.id = {user_id};"
+    );
     let stmt = conn.prepare(&query).await.unwrap();
     match conn.query(&stmt, &[]).await {
         Ok(_) => {
-            info!("\
-                {tracking_label} - \
-                user {user_id} email {user_email} account verified");
-        },
+            info!(
+                "{tracking_label} - \
+                user {user_id} email {user_email} account verified"
+            );
+        }
         Err(e) => {
             let err_msg = format!("{e}");
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserVerify {
-                            user_id: -1,
-                            email: format!(""),
-                            state: -1,
-                            verified: -1,
-                            role: format!(""),
-                            msg: format!("\
-                                User table update failed for user verification \
-                                user_id={user_id} {user_email}={verify_token} \
-                                with err='{err_msg}'")
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserVerify {
+                        user_id: -1,
+                        email: "".to_string(),
+                        state: -1,
+                        verified: -1,
+                        role: "".to_string(),
+                        msg: format!(
+                            "User table update failed for user verification \
+                            user_id={user_id} {user_email}={verify_token} \
+                            with err='{err_msg}'"
+                        ),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
     };
 
     // must match up with RETURNING
-    for row in query_result.iter() {
+    if let Some(row) = query_result.first() {
         let found_user_id: i32 = row.try_get("user_id").unwrap();
         let email: String = row.try_get("email").unwrap();
         let user_verify_state: i32 = row.try_get("state").unwrap();
         let response = Response::builder()
             .status(200)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserVerify {
-                        user_id: found_user_id,
-                        email: email.clone(),
-                        state: user_model.state,
-                        verified: user_verify_state,
-                        role: user_model.role,
-                        msg: format!("\
-                            user {found_user_id} verified {email}"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserVerify {
+                    user_id: found_user_id,
+                    email: email.clone(),
+                    state: user_model.state,
+                    verified: user_verify_state,
+                    role: user_model.role,
+                    msg: format!("user {found_user_id} verified {email}"),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
 
-    let response = Response::builder()
+    Ok(Response::builder()
         .status(400)
         .body(Body::from(
-            serde_json::to_string(
-                &ApiResUserVerify {
-                    user_id: -1,
-                    email: format!(""),
-                    state: -1,
-                    verified: -1,
-                    role: format!(""),
-                    msg: format!("\
-                        User update failed - user does \
-                        not exist with user_id={user_id} email={user_email}")
-                }
-            ).unwrap()))
-        .unwrap();
-    return Ok(response);
+            serde_json::to_string(&ApiResUserVerify {
+                user_id: -1,
+                email: "".to_string(),
+                state: -1,
+                verified: -1,
+                role: "".to_string(),
+                msg: format!(
+                    "User update failed - user does \
+                    not exist with user_id={user_id} email={user_email}"
+                ),
+            })
+            .unwrap(),
+        ))
+        .unwrap())
 }

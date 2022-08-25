@@ -1,5 +1,5 @@
-use crate::tls::tls_config::TlsConfig;
 use crate::tls::get_tls_config::get_tls_config;
+use crate::tls::tls_config::TlsConfig;
 
 /// CoreConfig
 ///
@@ -37,10 +37,10 @@ use crate::tls::get_tls_config::get_tls_config;
 /// export POSTGRES_PASSWORD="postgres"
 /// ```
 ///
-/// ### Change the postgres database
+/// ### Change the postgres database name
 ///
 /// ```bash
-/// export SERVER_DB_NODE_NAME="mydb"
+/// export DB_NAME="mydb"
 /// ```
 ///
 /// ### Change the user password salt for argon2 password hashing
@@ -123,77 +123,88 @@ pub struct CoreConfig {
 ///
 /// * `label` - logging label
 ///
-pub async fn build_core_config(
-    label: &str)
--> Result<CoreConfig, String>
-{
+pub async fn build_core_config(label: &str) -> Result<CoreConfig, String> {
     let tracking_label = std::env::var("SERVER_NAME_LABEL")
-        .unwrap_or(format!("{label}"));
-    let api_name = std::env::var("SERVER_NAME_API")
-        .unwrap_or(format!("api"));
-    let api_address = std::env::var(format!("{api_name}_ENDPOINT").to_uppercase())
-        .unwrap_or(format!("0.0.0.0:3000"));
-
+        .unwrap_or_else(|_| label.to_string());
+    let api_name =
+        std::env::var("SERVER_NAME_API").unwrap_or_else(|_| "api".to_string());
+    let api_address =
+        std::env::var(format!("{api_name}_ENDPOINT").to_uppercase())
+            .unwrap_or_else(|_| "0.0.0.0:3000".to_string());
     let api_tls_mode = "tls";
     let db_cert_name = std::env::var("SERVER_DB_NODE_NAME")
-        .unwrap_or(format!("postgres"));
-    let db_conn_type = std::env::var(format!("{db_cert_name}_DB_CONN_TYPE").to_uppercase())
-        .unwrap_or(format!("postgresql"));
-    let db_address = std::env::var(format!("{db_cert_name}_ENDPOINT").to_uppercase())
-        .unwrap_or(format!("0.0.0.0:5432"));
-    let db_username = std::env::var(format!("{db_cert_name}_USERNAME").to_uppercase())
-        .unwrap_or(format!("datawriter"));
-    let db_password = std::env::var(format!("{db_cert_name}_PASSWORD").to_uppercase())
-        .unwrap_or(format!("123321"));
-    let db_name = std::env::var("SERVER_DB_NODE_NAME")
-        .unwrap_or(format!("mydb"));
+        .unwrap_or_else(|_| "postgres".to_string());
+    let db_conn_type =
+        std::env::var(format!("{db_cert_name}_DB_CONN_TYPE").to_uppercase())
+            .unwrap_or_else(|_| "postgresql".to_string());
+    let db_address =
+        std::env::var(format!("{db_cert_name}_ENDPOINT").to_uppercase())
+            .unwrap_or_else(|_| "0.0.0.0:5432".to_string());
+    let db_username =
+        std::env::var(format!("{db_cert_name}_USERNAME").to_uppercase())
+            .unwrap_or_else(|_| "datawriter".to_string());
+    let db_password =
+        std::env::var(format!("{db_cert_name}_PASSWORD").to_uppercase())
+            .unwrap_or_else(|_| "123321".to_string());
+    let db_name =
+        std::env::var("DB_NAME").unwrap_or_else(|_| "mydb".to_string());
     let db_tls_mode = "require";
     let server_password_salt = std::env::var("SERVER_PASSWORD_SALT")
-        .unwrap_or(String::from("PLEASE_CHANGE_ME"));
+        .unwrap_or_else(|_| "PLEASE_CHANGE_ME".to_string());
 
     let pki_dir_jwt = std::env::var("SERVER_PKI_DIR_JWT")
-        .unwrap_or(format!("./jwt"));
+        .unwrap_or_else(|_| "./jwt".to_string());
     let token_private_key_path = std::env::var("TOKEN_ALGO_PRIVATE_KEY")
-        .unwrap_or(format!("{pki_dir_jwt}/private-key-pkcs8.pem"));
+        .unwrap_or_else(|_| format!("{pki_dir_jwt}/private-key-pkcs8.pem"));
     let token_public_key_path = std::env::var("TOKEN_ALGO_PUBLIC_KEY")
-        .unwrap_or(format!("{pki_dir_jwt}/public-key.pem"));
+        .unwrap_or_else(|_| format!("{pki_dir_jwt}/public-key.pem"));
 
-    let token_private_key_bytes = std::fs::read_to_string(&token_private_key_path)
-        .unwrap()
-        .into_bytes();
-    let token_public_key_bytes = std::fs::read_to_string(&token_public_key_path)
-        .unwrap()
-        .into_bytes();
+    let token_private_key_bytes =
+        std::fs::read_to_string(&token_private_key_path)
+            .unwrap()
+            .into_bytes();
+    let token_public_key_bytes =
+        std::fs::read_to_string(&token_public_key_path)
+            .unwrap()
+            .into_bytes();
 
     let api_config = match get_tls_config(
-            &tracking_label,
-            &api_name,
-            &api_address,
-            &api_tls_mode).await {
+        &tracking_label,
+        &api_name,
+        &api_address,
+        api_tls_mode,
+    )
+    .await
+    {
         Ok(api_config) => api_config,
         Err(err_msg) => {
-            panic!("\
-                {tracking_label} - \
-                failed to build {api_name} tls config with err='{err_msg}'");
+            panic!(
+                "{tracking_label} - \
+                failed to build {api_name} tls config with err='{err_msg}'"
+            );
         }
     };
 
     let db_config = match get_tls_config(
-            &tracking_label,
-            &db_cert_name,
-            &db_address,
-            &db_tls_mode).await {
+        &tracking_label,
+        &db_cert_name,
+        &db_address,
+        db_tls_mode,
+    )
+    .await
+    {
         Ok(db_config) => db_config,
         Err(err_msg) => {
-            panic!("\
-                {label} - \
-                failed to build {db_cert_name} tls config with err='{err_msg}'");
+            panic!(
+                "{label} - \
+                failed to build {db_cert_name} tls config with err='{err_msg}'"
+            );
         }
     };
 
-    if ! db_config.enabled {
-        let err_msg = format!("\
-            {tracking_label} - invalid tls for the db - stopping");
+    if !db_config.enabled {
+        let err_msg =
+            "{tracking_label} - invalid tls for the db - stopping".to_string();
         error!("{err_msg}");
         return Err(err_msg);
     }
@@ -203,20 +214,20 @@ pub async fn build_core_config(
         label: tracking_label,
         server_address: api_address,
         server_password_salt: server_password_salt.as_bytes().to_vec(),
-        db_conn_type: db_conn_type,
-        db_username: db_username,
-        db_password: db_password,
-        db_address: db_address,
-        db_name: db_name,
-        api_config: api_config,
-        db_config: db_config,
+        db_conn_type,
+        db_username,
+        db_password,
+        db_address,
+        db_name,
+        api_config,
+        db_config,
         encoding_key_bytes: token_private_key_bytes.clone(),
         decoding_key_bytes: token_public_key_bytes.clone(),
     };
 
-    if std::env::var("DEBUG").unwrap_or(format!("0")) == format!("1") {
-        info!("\
-            {label} - {api_name} listening on {}\n\
+    if std::env::var("DEBUG").unwrap_or_else(|_| "0".to_string()) == *"1" {
+        info!(
+            "{label} - {api_name} listening on {}\n\
             test the api with:\n\
             \n\
             curl -iivv \
@@ -232,13 +243,14 @@ pub async fn build_core_config(
             - private key: {token_private_key_path}\n\
             - public key: {token_public_key_path}\n\
             \n",
-                config.server_address,
-                config.api_config.ca_path,
-                config.api_config.cert_path,
-                config.api_config.key_path,
-                config.server_address,
-                config.db_address);
+            config.server_address,
+            config.api_config.ca_path,
+            config.api_config.cert_path,
+            config.api_config.key_path,
+            config.server_address,
+            config.db_address
+        );
     }
 
-    return Ok(config);
+    Ok(config)
 }

@@ -1,10 +1,70 @@
 image:
   repository: jayjohnson/rust-restapi
-  # repository: jayjohnson/rust-restapi-base
   tag: latest
   pullPolicy: Always
 
 service:
-  port: 3000
   monitor:
-    enabled: true
+    enabled: false
+
+env:
+  # kube resources are prefixed with this name value
+  # secrets in the namespace use this same convention
+  name: dev 
+  app:
+    name: api
+    host: 0.0.0.0
+    port: 3000
+    nodePort: 31100
+    command:
+    - sh
+    - -c
+    - |
+      #!/usr/bin/env bash -e
+      cd /server
+      echo "starting up"
+      # env | sort
+      echo "/server/target/release/examples/server"
+      /server/target/release/examples/server
+    replicas: 1
+    log:
+      name: rust-restapi
+      level: info
+      # enable rust backtraces with "1"
+      backtrace: "0"
+      # set to "1" to enable debug
+      debug: "0"
+    user:
+      email:
+        verification:
+          # set to "0" to disable email verification
+          enabled: "1"
+          # set to "0" allows unverified users to login
+          required_for_login: "0"
+          # 1 day = 86400
+          expiration_in_seconds: "86400"
+      auth:
+        salt:
+          password: CUSTOM_SALT_PASSWORD
+          # password: UUID
+        otp:
+          # 1 day = 86400
+          expiration_in_seconds: "86400"
+  jwt:
+    token:
+      org: CUSTOM_JWT_ORG
+      # org: example.com
+      header: Bearer
+    # 30 days = 2592000
+    expiration_in_seconds: "2592000"
+  db:
+    endpoint: postgres.default.svc.cluster.local:5432
+    # name of the db for the api
+    name: mydb
+  s3:
+    data:
+      bucket: CUSTOM_S3_BUCKET_NAME
+      prefix: "/rust-restapi/tests"
+      storage_class: STANDARD
+      # disable s3 uploads by setting to "1"
+      uploads_disabled: "0"

@@ -38,33 +38,31 @@ use url::Url;
 /// ```
 pub async fn get_query_params_from_url(
     tracking_label: &str,
-    url: &str)
--> Result<HashMap<String, String>, String>
-{
+    url: &str,
+) -> Result<HashMap<String, String>, String> {
     let url_len = url.len();
     if url_len == 0 {
-        return Err(format!("get_query_params_from_url - no url set"));
-    }
-    else if url_len > 512 {
-        return Err(format!("get_query_params_from_url - url is too long"));
+        return Err("get_query_params_from_url - no url set".to_string());
+    } else if url_len > 512 {
+        return Err("get_query_params_from_url - url is too long".to_string());
     }
     let parsed_url = match Url::parse(url) {
         Ok(parsed_url) => parsed_url,
         Err(e) => {
             let err_msg = format!("{e}");
-            error!("\
-                {tracking_label} - \
+            error!(
+                "{tracking_label} - \
                 get_query_params_from_url failed to parse \
-                {url} with err='{err_msg}'");
+                {url} with err='{err_msg}'"
+            );
             return Err(err_msg);
-        },
+        }
     };
     let query_params_hash_map: HashMap<String, String> =
         parsed_url.query_pairs().into_owned().collect();
     /*
-    info!("\
-        {tracking_label} - \
+    info!("{tracking_label} - \
         found hash map - hash_map {url}");
     */
-    return Ok(query_params_hash_map);
+    Ok(query_params_hash_map)
 }

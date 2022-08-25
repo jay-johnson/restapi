@@ -9,10 +9,10 @@ use postgres_native_tls::MakeTlsConnector;
 use bb8::Pool;
 use bb8_postgres::PostgresConnectionManager;
 
+use hyper::service::Service;
 use hyper::Body;
 use hyper::Request;
 use hyper::Response;
-use hyper::service::Service;
 
 use crate::core::core_config::CoreConfig;
 use crate::core::server::core_task_item::CoreTaskItem;
@@ -67,7 +67,13 @@ pub struct ConnectionHandler {
 impl Service<Request<Body>> for ConnectionHandler {
     type Response = Response<Body>;
     type Error = Infallible;
-    type Future = Pin<Box<dyn Future<Output = std::result::Result<Self::Response, Self::Error>> + Send>>;
+    type Future = Pin<
+        Box<
+            dyn Future<
+                    Output = std::result::Result<Self::Response, Self::Error>,
+                > + Send,
+        >,
+    >;
 
     /// poll_ready
     ///
@@ -79,8 +85,10 @@ impl Service<Request<Body>> for ConnectionHandler {
     ///
     /// * `_cx` - [`Context`](std::task::Context)
     ///
-    fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<std::result::Result<(), Self::Error>>
-    {
+    fn poll_ready(
+        &mut self,
+        _cx: &mut Context<'_>,
+    ) -> Poll<std::result::Result<(), Self::Error>> {
         Poll::Ready(Ok(()))
     }
 
@@ -103,8 +111,7 @@ impl Service<Request<Body>> for ConnectionHandler {
     ///
     /// * `req` - a Hyper [`Request`](hyper::Request)
     ///
-    fn call(&mut self, req: Request<Body>) -> Self::Future
-    {
+    fn call(&mut self, req: Request<Body>) -> Self::Future {
         // build a task item containing everything
         // a request needs
         let data = CoreTaskItem {

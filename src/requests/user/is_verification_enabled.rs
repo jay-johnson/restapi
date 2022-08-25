@@ -23,12 +23,11 @@
 ///
 /// ```rust
 /// use restapi::requests::user::is_verification_enabled::is_verification_enabled;
-/// return is_verification_enabled(); 
+/// return is_verification_enabled();
 /// ```
 ///
-pub fn is_verification_enabled()
--> bool
-{
-    return std::env::var("USER_EMAIL_VERIFICATION_ENABLED")
-        .unwrap_or(String::from("1")) == String::from("1");
+pub fn is_verification_enabled() -> bool {
+    std::env::var("USER_EMAIL_VERIFICATION_ENABLED")
+        .unwrap_or_else(|_| "1".to_string())
+        == *"1"
 }

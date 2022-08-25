@@ -2,8 +2,8 @@
 //!
 use std::convert::Infallible;
 
-use prometheus::*;
 use lazy_static::lazy_static;
+use prometheus::*;
 use prometheus_static_metric::auto_flush_from;
 use prometheus_static_metric::make_auto_flush_static_metric;
 
@@ -209,22 +209,19 @@ lazy_static! {
 /// use crate::monitoring::metrics::handle_showing_metrics;
 /// handle_showing_metrics();
 /// ```
-pub fn handle_showing_metrics()
--> std::result::Result<Response<Body>, Infallible>
-{
+pub fn handle_showing_metrics(
+) -> std::result::Result<Response<Body>, Infallible> {
     let encoder = TextEncoder::new();
     let mut buffer = vec![];
     encoder
         .encode(&prometheus::gather(), &mut buffer)
         .expect("Failed to encode metrics");
 
-    let response = String::from_utf8(buffer.clone()).expect("Failed to convert bytes to string");
+    let response = String::from_utf8(buffer.clone())
+        .expect("Failed to convert bytes to string");
     buffer.clear();
 
-    let processed_result = Ok(
-        Response::new(
-            Body::from(response)));
-    return processed_result;
+    Ok(Response::new(Body::from(response)))
 }
 
 /// record_monitoring_metrics_api_before
@@ -256,92 +253,92 @@ pub fn handle_showing_metrics()
 pub fn record_monitoring_metrics_api_before(
     uri: &str,
     resource: &str,
-    method: &str)
-{
-    debug!("\
-        metrics - before - uri={uri} \
+    method: &str,
+) {
+    debug!(
+        "metrics - before - uri={uri} \
         resource={resource} \
-        method={method}");
+        method={method}"
+    );
 
-    match (
-            resource,
-            method) {
+    match (resource, method) {
         ("auth", "login") => {
             TLS_HTTP_COUNTER.auth.login.inc();
             TLS_HTTP_HISTOGRAM.auth.login.observe(1.0);
-        },
+        }
         ("user", "post") => {
             TLS_HTTP_COUNTER.user.post.inc();
             TLS_HTTP_HISTOGRAM.user.post.observe(1.0);
-        },
+        }
         ("user", "delete") => {
             TLS_HTTP_COUNTER.user.delete.inc();
             TLS_HTTP_HISTOGRAM.user.delete.observe(1.0);
-        },
+        }
         ("user", "put") => {
             TLS_HTTP_COUNTER.user.put.inc();
             TLS_HTTP_HISTOGRAM.user.put.observe(1.0);
-        },
+        }
         ("user", "get") => {
             TLS_HTTP_COUNTER.user.get.inc();
             TLS_HTTP_HISTOGRAM.user.get.observe(1.0);
-        },
+        }
         ("user", "search") => {
             TLS_HTTP_COUNTER.user.search.inc();
             TLS_HTTP_HISTOGRAM.user.search.observe(1.0);
-        },
+        }
         ("user", "create_otp") => {
             TLS_HTTP_COUNTER.user.create_otp.inc();
             TLS_HTTP_HISTOGRAM.user.create_otp.observe(1.0);
-        },
+        }
         ("user", "consume_otp") => {
             TLS_HTTP_COUNTER.user.consume_otp.inc();
             TLS_HTTP_HISTOGRAM.user.consume_otp.observe(1.0);
-        },
+        }
         ("user", "consume_verify") => {
             TLS_HTTP_COUNTER.user.consume_verify.inc();
             TLS_HTTP_HISTOGRAM.user.consume_verify.observe(1.0);
-        },
+        }
         // end of user
         ("data", "post") => {
             TLS_HTTP_COUNTER.data.post.inc();
             TLS_HTTP_HISTOGRAM.data.post.observe(1.0);
-        },
+        }
         ("data", "delete") => {
             TLS_HTTP_COUNTER.data.delete.inc();
             TLS_HTTP_HISTOGRAM.data.delete.observe(1.0);
-        },
+        }
         ("data", "put") => {
             TLS_HTTP_COUNTER.data.put.inc();
             TLS_HTTP_HISTOGRAM.data.put.observe(1.0);
-        },
+        }
         ("data", "get") => {
             TLS_HTTP_COUNTER.data.get.inc();
             TLS_HTTP_HISTOGRAM.data.get.observe(1.0);
-        },
+        }
         ("data", "search") => {
             TLS_HTTP_COUNTER.data.search.inc();
             TLS_HTTP_HISTOGRAM.data.search.observe(1.0);
-        },
+        }
         ("data", "upload") => {
             TLS_HTTP_COUNTER.data.upload.inc();
             TLS_HTTP_HISTOGRAM.data.upload.observe(1.0);
-        },
+        }
         // end of data
         ("unknown", "get") => {
             TLS_HTTP_COUNTER.unknown.get.inc();
             TLS_HTTP_HISTOGRAM.unknown.get.observe(1.0);
-        },
+        }
         ("unknown", "post") => {
             TLS_HTTP_COUNTER.unknown.post.inc();
             TLS_HTTP_HISTOGRAM.unknown.post.observe(1.0);
-        },
+        }
         // end of unknown
         (_, _) => {
-            warn!("\
-                metrics - before - unsupported - uri={uri} \
+            warn!(
+                "metrics - before - unsupported - uri={uri} \
                 resource={resource} \
-                method={method}");
+                method={method}"
+            );
         }
     }
 }
@@ -387,906 +384,1787 @@ pub fn record_monitoring_metrics_api_after(
     uri: &str,
     resource: &str,
     method: &str,
-    processed_response: std::result::Result<Response<Body>, Infallible>)
--> std::result::Result<Response<Body>, Infallible>
-{
-    if processed_response.is_ok() {
-        let cloned_result = processed_response.unwrap();
-        match (
-                resource,
-                method) {
-            ("auth", "login") => {
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.auth.login.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.auth.login.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.auth.login.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.auth.login.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.auth.login.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.auth.login.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.auth.login.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.auth.login.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.auth.login.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.auth.login.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.auth.login.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.auth.login.unsupported.inc();
-                    },
+    processed_response: std::result::Result<Response<Body>, Infallible>,
+) -> std::result::Result<Response<Body>, Infallible> {
+    match processed_response {
+        Ok(resp) => {
+            match (resource, method) {
+                ("auth", "login") => {
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .auth
+                                .login
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .auth
+                                .login
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .auth
+                                .login
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .auth
+                                .login
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .auth
+                                .login
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .auth
+                                .login
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .auth
+                                .login
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .auth
+                                .login
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .auth
+                                .login
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .auth
+                                .login
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .auth
+                                .login
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .auth
+                                .login
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.auth.login.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.auth.login.observe(1.0);
-            },
-            ("user", "post") => {
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.post.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.post.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.post.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.post.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.post.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.post.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.post.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.post.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.post.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.post.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.post.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.post.unsupported.inc();
-                    },
+                ("user", "post") => {
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .post
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .post
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .post
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .post
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .post
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .post
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .post
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .post
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .post
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .post
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .post
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .post
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.user.post.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.user.post.observe(1.0);
-            },
-            ("user", "delete") => {
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.delete.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.delete.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.delete.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.delete.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.delete.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.delete.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.delete.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.delete.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.delete.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.delete.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.delete.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.delete.unsupported.inc();
-                    },
+                ("user", "delete") => {
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .delete
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .delete
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .delete
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .delete
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .delete
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .delete
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .delete
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .delete
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .delete
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .delete
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .delete
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .delete
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.user.delete.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.user.delete.observe(1.0);
-            },
-            ("user", "put") => {
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.put.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.put.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.put.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.put.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.put.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.put.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.put.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.put.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.put.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.put.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.put.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.put.unsupported.inc();
-                    },
+                ("user", "put") => {
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .put
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .put
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .put
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .put
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .put
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .put
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .put
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .put
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .put
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .put
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .put
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .put
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.user.put.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.user.put.observe(1.0);
-            },
-            ("user", "get") => {
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.get.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.get.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.get.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.get.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.get.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.get.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.get.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.get.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.get.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.get.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.get.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.get.unsupported.inc();
-                    },
+                ("user", "get") => {
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .get
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .get
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .get
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .get
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .get
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .get
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .get
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .get
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .get
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .get
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .get
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .get
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.user.get.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.user.get.observe(1.0);
-            },
-            ("user", "search") => {
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.search.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.search.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.search.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.search.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.search.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.search.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.search.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.search.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.search.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.search.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.search.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.search.unsupported.inc();
-                    },
+                ("user", "search") => {
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .search
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .search
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .search
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .search
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .search
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .search
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .search
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .search
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .search
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .search
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .search
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .search
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.user.search.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.user.search.observe(1.0);
-            },
-            ("user", "create_otp") => {
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.create_otp.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.create_otp.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.create_otp.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.create_otp.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.create_otp.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.create_otp.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.create_otp.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.create_otp.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.create_otp.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.create_otp.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.create_otp.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.create_otp.unsupported.inc();
-                    },
+                ("user", "create_otp") => {
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .create_otp
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .create_otp
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .create_otp
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .create_otp
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .create_otp
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .create_otp
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .create_otp
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .create_otp
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .create_otp
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .create_otp
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .create_otp
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .create_otp
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.user.create_otp.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.user.create_otp.observe(1.0);
-            },
-            ("user", "consume_otp") => {
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_otp.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_otp.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_otp.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_otp.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_otp.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_otp.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_otp.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_otp.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_otp.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_otp.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_otp.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_otp.unsupported.inc();
-                    },
+                ("user", "consume_otp") => {
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_otp
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_otp
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_otp
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_otp
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_otp
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_otp
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_otp
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_otp
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_otp
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_otp
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_otp
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_otp
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.user.consume_otp.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.user.consume_otp.observe(1.0);
-            },
-            ("user", "consume_verify") => {
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_verify.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_verify.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_verify.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_verify.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_verify.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_verify.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_verify.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_verify.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_verify.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_verify.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_verify.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.user.consume_verify.unsupported.inc();
-                    },
+                ("user", "consume_verify") => {
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_verify
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_verify
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_verify
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_verify
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_verify
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_verify
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_verify
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_verify
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_verify
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_verify
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_verify
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .user
+                                .consume_verify
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.user.consume_verify.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.user.consume_verify.observe(1.0);
-            },
-            // end of user
-            ("data", "post") => {
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.post.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.post.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.post.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.post.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.post.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.post.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.post.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.post.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.post.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.post.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.post.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.post.unsupported.inc();
-                    },
+                // end of user
+                ("data", "post") => {
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .post
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .post
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .post
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .post
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .post
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .post
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .post
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .post
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .post
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .post
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .post
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "
+                                unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .post
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.data.post.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.data.post.observe(1.0);
-            },
-            ("data", "delete") => {
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.delete.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.delete.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.delete.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.delete.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.delete.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.delete.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.delete.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.delete.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.delete.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.delete.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.delete.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.delete.unsupported.inc();
-                    },
+                ("data", "delete") => {
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .delete
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .delete
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .delete
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .delete
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .delete
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .delete
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .delete
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .delete
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .delete
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .delete
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .delete
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .delete
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.data.delete.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.data.delete.observe(1.0);
-            },
-            ("data", "put") => {
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.put.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.put.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.put.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.put.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.put.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.put.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.put.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.put.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.put.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.put.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.put.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.put.unsupported.inc();
-                    },
+                ("data", "put") => {
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .put
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .put
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .put
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .put
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .put
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .put
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .put
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .put
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .put
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .put
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .put
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .put
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.data.put.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.data.put.observe(1.0);
-            },
-            ("data", "get") => {
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.get.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.get.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.get.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.get.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.get.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.get.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.get.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.get.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.get.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.get.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.get.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.get.unsupported.inc();
-                    },
+                ("data", "get") => {
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .get
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .get
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .get
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .get
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .get
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .get
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .get
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .get
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .get
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .get
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .get
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .get
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.data.get.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.data.get.observe(1.0);
-            },
-            ("data", "search") => {
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.search.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.search.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.search.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.search.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.search.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.search.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.search.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.search.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.search.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.search.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.search.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.search.unsupported.inc();
-                    },
+                ("data", "search") => {
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .search
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .search
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .search
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .search
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .search
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .search
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .search
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .search
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .search
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .search
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .search
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .search
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.data.search.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.data.search.observe(1.0);
-            },
-            ("data", "upload") => {
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.upload.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.upload.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.upload.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.upload.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.upload.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.upload.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.upload.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.upload.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.upload.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.upload.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.upload.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.data.upload.unsupported.inc();
-                    },
+                ("data", "upload") => {
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .upload
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .upload
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .upload
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .upload
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .upload
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .upload
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .upload
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .upload
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .upload
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .upload
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .upload
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .data
+                                .upload
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.data.upload.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.data.upload.observe(1.0);
-            },
-            // end of data
-            ("unknown", "get") => {
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.get.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.get.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.get.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.get.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.get.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.get.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.get.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.get.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.get.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.get.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.get.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.get.unsupported.inc();
-                    },
+                // end of data
+                ("unknown", "get") => {
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .get
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .get
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .get
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .get
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .get
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .get
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .get
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .get
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .get
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .get
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .get
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .get
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.unknown.get.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.unknown.get.observe(1.0);
-            },
-            ("unknown", "post") => {
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.post.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.post.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.post.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.post.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.post.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.post.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.post.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.post.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.post.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.post.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.post.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.post.unsupported.inc();
-                    },
+                ("unknown", "post") => {
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .post
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .post
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .post
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .post
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .post
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .post
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .post
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .post
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .post
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .post
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .post
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .post
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.unknown.post.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.unknown.post.observe(1.0);
-            },
-            // end of unknown
-            (_, _) => {
-                warn!("\
-                    metrics - after - unsupported - uri={uri} \
-                    resource={resource} \
-                    method={method}");
-                match cloned_result.status() {
-                    StatusCode::OK => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.unsupported.http_200.inc();
-                    },
-                    StatusCode::CREATED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.unsupported.http_201.inc();
-                    },
-                    StatusCode::BAD_REQUEST => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.unsupported.http_400.inc();
-                    },
-                    StatusCode::UNAUTHORIZED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.unsupported.http_401.inc();
-                    },
-                    StatusCode::FORBIDDEN => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.unsupported.http_403.inc();
-                    },
-                    StatusCode::NOT_FOUND => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.unsupported.http_404.inc();
-                    },
-                    StatusCode::INTERNAL_SERVER_ERROR => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.unsupported.http_500.inc();
-                    },
-                    StatusCode::NOT_IMPLEMENTED => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.unsupported.http_501.inc();
-                    },
-                    StatusCode::BAD_GATEWAY => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.unsupported.http_502.inc();
-                    },
-                    StatusCode::SERVICE_UNAVAILABLE => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.unsupported.http_503.inc();
-                    },
-                    StatusCode::GATEWAY_TIMEOUT => {
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.unsupported.http_504.inc();
-                    },
-                    _ => {
-                        error!("\
-                            unsupported metric \
-                            resource={resource} \
-                            method={method} \
-                            result={:?} \
-                            status_code={:?}",
-                            cloned_result,
-                            cloned_result.status());
-                        TLS_HTTP_COUNTER_STATUS_CODE.unknown.unsupported.unsupported.inc();
-                    },
+                // end of unknown
+                (_, _) => {
+                    warn!(
+                        "metrics - after - unsupported - uri={uri} \
+                        resource={resource} \
+                        method={method}"
+                    );
+                    match resp.status() {
+                        StatusCode::OK => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .unsupported
+                                .http_200
+                                .inc();
+                        }
+                        StatusCode::CREATED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .unsupported
+                                .http_201
+                                .inc();
+                        }
+                        StatusCode::BAD_REQUEST => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .unsupported
+                                .http_400
+                                .inc();
+                        }
+                        StatusCode::UNAUTHORIZED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .unsupported
+                                .http_401
+                                .inc();
+                        }
+                        StatusCode::FORBIDDEN => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .unsupported
+                                .http_403
+                                .inc();
+                        }
+                        StatusCode::NOT_FOUND => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .unsupported
+                                .http_404
+                                .inc();
+                        }
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .unsupported
+                                .http_500
+                                .inc();
+                        }
+                        StatusCode::NOT_IMPLEMENTED => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .unsupported
+                                .http_501
+                                .inc();
+                        }
+                        StatusCode::BAD_GATEWAY => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .unsupported
+                                .http_502
+                                .inc();
+                        }
+                        StatusCode::SERVICE_UNAVAILABLE => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .unsupported
+                                .http_503
+                                .inc();
+                        }
+                        StatusCode::GATEWAY_TIMEOUT => {
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .unsupported
+                                .http_504
+                                .inc();
+                        }
+                        _ => {
+                            error!(
+                                "unsupported metric \
+                                resource={resource} \
+                                method={method} \
+                                result={:?} \
+                                status_code={:?}",
+                                resp,
+                                resp.status()
+                            );
+                            TLS_HTTP_COUNTER_STATUS_CODE
+                                .unknown
+                                .unsupported
+                                .unsupported
+                                .inc();
+                        }
+                    }
+                    TLS_HTTP_HISTOGRAM.unknown.unsupported.observe(1.0);
                 }
-                TLS_HTTP_HISTOGRAM.unknown.unsupported.observe(1.0);
             }
+            Ok(resp)
         }
-        return Ok(cloned_result);
+        Err(e) => Err(e),
     }
-
-    return processed_response;
 }

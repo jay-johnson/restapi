@@ -13,24 +13,21 @@ use crate::core::server::core_server::core_server;
 ///
 /// * `config` - [`CoreConfig`](crate::core::core_config::CoreConfig)
 ///
-pub async fn run_server(
-    config: &CoreConfig)
--> bool
-{
+pub async fn run_server(config: &CoreConfig) -> bool {
     // boot up the server
     match core_server(config).await {
         Ok(_) => {
-            info!("\
-                {} - run_server.core_server done",
-                config.label);
-            return true;
-        },
+            info!("{} - run_server.core_server done", config.label);
+            true
+        }
         Err(hyper_error) => {
             let err_msg = format!("{hyper_error}");
-            panic!("\
-                {} - run_server.core_server failed with \
+            panic!(
+                "{} - run_server.core_server failed with \
                 err='{err_msg}'",
-                config.label);
+                config.label
+            );
         }
     };
+    false
 }

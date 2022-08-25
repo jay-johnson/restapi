@@ -357,6 +357,17 @@ This project focused on integration tests for v1 instead of only rust tests (spe
 
 Please refer to the [Integration Tests Using curl Guide](./tests/integration-using-curl.md)
 
+## Podman Image Push
+
+```bash
+cur_tag=$(cat Cargo.toml | grep version | head -1 | sed -e 's/"//g' | awk '{print $NF}')
+podman push IMAGE_ID "docker://docker.io/jayjohnson/rust-restapi:${cur_tag}"
+```
+
+## Helm Chart
+
+Please refer to the [Deploying the Rust Rest API helm chart into kubernetes guide](https://github.com/jay-johnson/restapi/blob/main/charts/rust-restapi/README.md) for deploying the example helm chart into a kubernetes cluster.
+
 ## Build Docs
 
 ```bash

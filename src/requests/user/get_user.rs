@@ -16,13 +16,13 @@ use postgres_native_tls::MakeTlsConnector;
 use bb8::Pool;
 use bb8_postgres::PostgresConnectionManager;
 
-use hyper::Body;
-use hyper::Response;
-use hyper::HeaderMap;
 use hyper::header::HeaderValue;
+use hyper::Body;
+use hyper::HeaderMap;
+use hyper::Response;
 
-use serde::Serialize;
 use serde::Deserialize;
+use serde::Serialize;
 
 use crate::core::core_config::CoreConfig;
 
@@ -148,103 +148,107 @@ pub async fn get_user(
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
     headers: &HeaderMap<HeaderValue>,
-    request_uri: &str)
--> std::result::Result<Response<Body>, Infallible>
-{
-    let user_id = str::replace(request_uri, "/user/", "").parse::<i32>().unwrap_or(-1);
+    request_uri: &str,
+) -> std::result::Result<Response<Body>, Infallible> {
+    let user_id = str::replace(request_uri, "/user/", "")
+        .parse::<i32>()
+        .unwrap_or(-1);
     if user_id <= 0 {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserGet {
-                        user_id: -1,
-                        email: String::from(""),
-                        state: -1,
-                        verified: -1,
-                        role: String::from(""),
-                        msg: format!("Invalid user_id must be a positive integer"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserGet {
+                    user_id: -1,
+                    email: "".to_string(),
+                    state: -1,
+                    verified: -1,
+                    role: "".to_string(),
+                    msg: ("Invalid user_id must be a positive integer")
+                        .to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
 
     info!("{tracking_label} - getting user_id={user_id}");
-    let user_object = ApiReqUserGet {
-        user_id: user_id,
-    };
+    let user_object = ApiReqUserGet { user_id };
 
     let conn = db_pool.get().await.unwrap();
     let _token = match validate_user_token(
-            tracking_label,
-            &config,
-            &conn,
-            headers,
-            user_id).await {
+        tracking_label,
+        config,
+        &conn,
+        headers,
+        user_id,
+    )
+    .await
+    {
         Ok(_token) => _token,
         Err(_) => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserGet {
-                            user_id: -1,
-                            email: String::from(""),
-                            state: -1,
-                            verified: -1,
-                            role: String::from(""),
-                            msg: format!("User get failed due to invalid token"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserGet {
+                        user_id: -1,
+                        email: "".to_string(),
+                        state: -1,
+                        verified: -1,
+                        role: "".to_string(),
+                        msg: ("User get failed due to invalid token")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
     };
 
     // find all user by email and an active state where state == 0
-    match get_user_by_id(
-            tracking_label,
-            user_id,
-            &conn).await {
+    match get_user_by_id(tracking_label, user_id, &conn).await {
         Ok(user_model) => {
             let response = Response::builder()
                 .status(200)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserGet {
-                            user_id: user_model.id,
-                            email: user_model.email,
-                            state: user_model.state,
-                            verified: user_model.verified,
-                            role: user_model.role,
-                            msg: format!("success"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserGet {
+                        user_id: user_model.id,
+                        email: user_model.email,
+                        state: user_model.state,
+                        verified: user_model.verified,
+                        role: user_model.role,
+                        msg: "success".to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
-            return Ok(response);
-        },
+            Ok(response)
+        }
         Err(err_msg) => {
-            error!("\
-                {tracking_label} - \
-                failed to get user by id with err={err_msg}");
+            error!(
+                "{tracking_label} - \
+                failed to get user by id with err={err_msg}"
+            );
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserGet {
-                            user_id: -1,
-                            email: String::from(""),
-                            state: -1,
-                            verified: -1,
-                            role: String::from(""),
-                            msg: format!("\
-                                User login failed - user does not exist with user_id={}",
-                                user_object.user_id)
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserGet {
+                        user_id: -1,
+                        email: "".to_string(),
+                        state: -1,
+                        verified: -1,
+                        role: "".to_string(),
+                        msg: format!(
+                            "User login failed - \
+                                user does not exist with user_id={}",
+                            user_object.user_id
+                        ),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
-            return Ok(response);
+            Ok(response)
         }
     }
 }

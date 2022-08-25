@@ -10,19 +10,18 @@
 //!
 use std::convert::Infallible;
 
-use postgres::Row as data_row;
 use postgres_native_tls::MakeTlsConnector;
 
 use bb8::Pool;
 use bb8_postgres::PostgresConnectionManager;
 
-use hyper::Body;
-use hyper::Response;
-use hyper::HeaderMap;
 use hyper::header::HeaderValue;
+use hyper::Body;
+use hyper::HeaderMap;
+use hyper::Response;
 
-use serde::Serialize;
 use serde::Deserialize;
+use serde::Serialize;
 
 use crate::core::core_config::CoreConfig;
 
@@ -87,21 +86,20 @@ pub struct ApiReqUserSearchData {
     pub below_bytes: Option<i64>,
     pub comments: Option<String>,
     pub encoding: Option<String>,
-    pub sloc: Option<String>
+    pub sloc: Option<String>,
 }
 
 /// implementation for handling complex search filtering
 /// using sql
 impl ApiReqUserSearchData {
-
     /// get_sql
     ///
     /// Build the v1 search query string based on the
     /// the requested values.
     ///
     pub fn get_sql(&self) -> String {
-        let mut update_value: String = format!("\
-            SELECT \
+        let mut update_value: String = format!(
+            "SELECT \
                 users_data.id, \
                 users_data.user_id, \
                 users_data.filename, \
@@ -116,7 +114,8 @@ impl ApiReqUserSearchData {
                 users_data \
             WHERE \
                 users_data.user_id = {}",
-            self.user_id);
+            self.user_id
+        );
         match self.creator_user_id {
             Some(_) => {
                 match update_value.len() {
@@ -125,41 +124,33 @@ impl ApiReqUserSearchData {
                         0
                     }
                     // only one user_id supported for now
-                    _ => {
-                        1
-                    }
+                    _ => 1,
                 }
-            },
-            None => {
-                1
             }
+            None => 1,
         };
         match self.data_id {
             Some(v) => {
                 update_value = format!("{update_value}, id = {}", v);
                 0
-            },
-            None => {
-                1
             }
+            None => 1,
         };
         match &self.filename {
             Some(v) => {
-                update_value = format!("{update_value}, filename ILIKE '%{v}%'");
+                update_value =
+                    format!("{update_value}, filename ILIKE '%{v}%'");
                 0
-            },
-            None => {
-                1
             }
+            None => 1,
         };
         match &self.data_type {
             Some(v) => {
-                update_value = format!("{update_value}, data_type ILIKE '%{v}%'");
+                update_value =
+                    format!("{update_value}, data_type ILIKE '%{v}%'");
                 0
-            },
-            None => {
-                1
             }
+            None => 1,
         };
         // https://www.google.com/search?q=rust+bigint+postgres
         // postgres size_in_bytes field is a BIGINT type
@@ -167,53 +158,45 @@ impl ApiReqUserSearchData {
             Some(v) => {
                 update_value = format!("{update_value}, size_in_bytes > {v}");
                 0
-            },
-            None => {
-                1
             }
+            None => 1,
         };
         match self.below_bytes {
             Some(v) => {
                 update_value = format!("{update_value}, size_in_bytes < {v}");
                 0
-            },
-            None => {
-                1
             }
+            None => 1,
         };
         match &self.comments {
             Some(v) => {
-                update_value = format!("{update_value}, comments ILIKE '%{v}%'");
+                update_value =
+                    format!("{update_value}, comments ILIKE '%{v}%'");
                 0
-            },
-            None => {
-                1
             }
+            None => 1,
         };
         match &self.encoding {
             Some(v) => {
-                update_value = format!("{update_value}, encoding ILIKE '%{v}%'");
+                update_value =
+                    format!("{update_value}, encoding ILIKE '%{v}%'");
                 0
-            },
-            None => {
-                1
             }
+            None => 1,
         };
         match &self.sloc {
             Some(v) => {
                 update_value = format!("{update_value}, sloc ILIKE '%{v}%'");
                 0
-            },
-            None => {
-                1
             }
+            None => 1,
         };
         // info!("ApiReqUserSearchData query: {cur_query}");
-        return String::from(format!("\
-                {} \
-                ORDER BY users_data.id DESC \
+        format!(
+            "{} ORDER BY users_data.id DESC \
                 LIMIT 100;",
-                update_value));
+            update_value
+        )
     }
 }
 
@@ -305,30 +288,29 @@ pub async fn search_user_data(
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
     headers: &HeaderMap<HeaderValue>,
-    bytes: &[u8])
--> std::result::Result<Response<Body>, Infallible>
-{
-
-    let user_object: ApiReqUserSearchData = match serde_json::from_slice(&bytes) {
+    bytes: &[u8],
+) -> std::result::Result<Response<Body>, Infallible> {
+    let user_object: ApiReqUserSearchData = match serde_json::from_slice(bytes)
+    {
         Ok(uo) => uo,
         Err(_) => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserSearchData {
-                            data: Vec::new(),
-                            msg: format!("\
-                                User search data failed - please ensure \
-                                user_id is set \
-                                with optional arguments \
-                                user_id, creator_user_id, \
-                                data_id, filename, data_type, \
-                                above_bytes, below_bytes, \
-                                comments, encoding, sloc \
-                                were set correctly in the request"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserSearchData {
+                        data: Vec::new(),
+                        msg: ("User search data failed - please ensure \
+                            user_id is set \
+                            with optional arguments \
+                            user_id, creator_user_id, \
+                            data_id, filename, data_type, \
+                            above_bytes, below_bytes, \
+                            comments, encoding, sloc \
+                            were set correctly in the request")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
@@ -336,40 +318,44 @@ pub async fn search_user_data(
     let user_id = user_object.user_id;
     let conn = db_pool.get().await.unwrap();
     let _token = match validate_user_token(
-            tracking_label,
-            &config,
-            &conn,
-            headers,
-            user_id).await {
+        tracking_label,
+        config,
+        &conn,
+        headers,
+        user_id,
+    )
+    .await
+    {
         Ok(_token) => _token,
         Err(_) => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserSearchData {
-                            data: Vec::new(),
-                            msg: format!("\
-                                User search data failed due to invalid token"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserSearchData {
+                        data: Vec::new(),
+                        msg: ("User search data failed due to invalid token")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
     };
 
     let cur_query = user_object.get_sql();
+    /*
     if false {
-        println!("\
-            {tracking_label} - \
+        println!(
+            "{tracking_label} - \
             searching for user_id={user_id} data with \
-            query {cur_query}");
+            query {cur_query}"
+        );
     }
+    */
 
     let stmt = conn.prepare(&cur_query).await.unwrap();
-    let mut query_result: Vec<data_row> = Vec::with_capacity(100);
-    if false { println!("{}", query_result.len()); }
-    query_result = match conn.query(&stmt, &[]).await {
+    let query_result = match conn.query(&stmt, &[]).await {
         Ok(query_result) => query_result,
         Err(e) => {
             let err_msg = format!("{e}");
@@ -396,15 +382,14 @@ pub async fn search_user_data(
         let found_comments: String = row.try_get("comments").unwrap();
         let found_encoding: String = row.try_get("encoding").unwrap();
         let found_sloc: String = row.try_get("sloc").unwrap();
-        let created_at_utc: chrono::DateTime<chrono::Utc> = row.try_get("created_at").unwrap();
+        let created_at_utc: chrono::DateTime<chrono::Utc> =
+            row.try_get("created_at").unwrap();
         let updated_at_str: String = match row.try_get("updated_at") {
             Ok(v) => {
                 let updated_at_utc: chrono::DateTime<chrono::Utc> = v;
                 format!("{}", updated_at_utc.format("%Y-%m-%dT%H:%M:%SZ"))
-            },
-            Err(_) => {
-                format!("")
             }
+            Err(_) => "".to_string(),
         };
         row_list.push(ModelUserData {
             user_id: found_user_id,
@@ -415,35 +400,37 @@ pub async fn search_user_data(
             comments: found_comments,
             encoding: found_encoding,
             sloc: found_sloc,
-            created_at: format!("{}", created_at_utc.format("%Y-%m-%dT%H:%M:%SZ")),
+            created_at: format!(
+                "{}",
+                created_at_utc.format("%Y-%m-%dT%H:%M:%SZ")
+            ),
             updated_at: updated_at_str,
-            msg: format!("success"),
+            msg: "success".to_string(),
         });
     }
-    if row_list.len() == 0 {
+    if row_list.is_empty() {
         let response = Response::builder()
             .status(200)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserSearchData {
-                        data: Vec::new(),
-                        msg: format!("no search data found"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserSearchData {
+                    data: Vec::new(),
+                    msg: "no search data found".to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
-        return Ok(response);
-    }
-    else {
+        Ok(response)
+    } else {
         let response = Response::builder()
             .status(200)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserSearchData {
-                        data: row_list,
-                        msg: format!("success"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserSearchData {
+                    data: row_list,
+                    msg: "success".to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
-        return Ok(response);
+        Ok(response)
     }
 }

@@ -19,11 +19,11 @@ use bb8_postgres::PostgresConnectionManager;
 use hyper::Body;
 use hyper::Response;
 
-use serde::Serialize;
 use serde::Deserialize;
+use serde::Serialize;
 
-use argon2::Config as argon_config;
 use argon2::hash_encoded as argon_hash_encoded;
+use argon2::Config as argon_config;
 
 use crate::core::core_config::CoreConfig;
 
@@ -144,30 +144,29 @@ pub async fn login_user(
     tracking_label: &str,
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
-    bytes: &[u8])
--> std::result::Result<Response<Body>, Infallible>
-{
+    bytes: &[u8],
+) -> std::result::Result<Response<Body>, Infallible> {
     // deserialize into a type
-    let user_object: ApiReqUserLogin = match serde_json::from_slice(&bytes) {
+    let user_object: ApiReqUserLogin = match serde_json::from_slice(bytes) {
         Ok(uo) => uo,
         Err(_) => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserLogin {
-                            user_id: -1,
-                            email: String::from(""),
-                            state: -1,
-                            verified: -1,
-                            role: String::from(""),
-                            token: String::from(""),
-                            msg: format!("\
-                                Login failed - please ensure \
-                                email and password \
-                                were set correctly in the request"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserLogin {
+                        user_id: -1,
+                        email: String::from(""),
+                        state: -1,
+                        verified: -1,
+                        role: String::from(""),
+                        token: String::from(""),
+                        msg: ("Login failed - please ensure \
+                            email and password \
+                            were set correctly in the request")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
@@ -178,11 +177,13 @@ pub async fn login_user(
     let hash = argon_hash_encoded(
         user_object.password.as_bytes(),
         &config.server_password_salt,
-        &argon_config).unwrap();
+        &argon_config,
+    )
+    .unwrap();
 
     // find all user by email and an active state where state == 0
-    let query = format!("\
-        SELECT \
+    let query = format!(
+        "SELECT \
             users.id, \
             users.email, \
             users.password, \
@@ -196,7 +197,8 @@ pub async fn login_user(
         AND \
             users.state = 0 \
         LIMIT 1;",
-        &user_object.email);
+        &user_object.email
+    );
     let conn = db_pool.get().await.unwrap();
     let stmt = conn.prepare(&query).await.unwrap();
     let query_result = match conn.query(&stmt, &[]).await {
@@ -214,8 +216,7 @@ pub async fn login_user(
                             verified: -1,
                             role: String::from(""),
                             token: String::from(""),
-                            msg: format!("\
-                                User login failed for email={} with err='{err_msg}'",
+                            msg: format!("User login failed for email={} with err='{err_msg}'",
                                 user_object.email)
                         }
                     ).unwrap()))
@@ -223,7 +224,8 @@ pub async fn login_user(
             return Ok(response);
         }
     };
-    let mut row_list: Vec<(i32, String, String, i32, i32, String)> = Vec::with_capacity(1);
+    let mut row_list: Vec<(i32, String, String, i32, i32, String)> =
+        Vec::with_capacity(1);
     for row in query_result.iter() {
         let id: i32 = row.try_get("id").unwrap();
         let email: String = row.try_get("email").unwrap();
@@ -233,18 +235,17 @@ pub async fn login_user(
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserLogin {
-                            user_id: -1,
-                            email: String::from(""),
-                            state: -1,
-                            verified: -1,
-                            role: String::from(""),
-                            token: String::from(""),
-                            msg: format!("\
-                                User login failed - invalid password")
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserLogin {
+                        user_id: -1,
+                        email: String::from(""),
+                        state: -1,
+                        verified: -1,
+                        role: String::from(""),
+                        token: String::from(""),
+                        msg: "User login failed - invalid password".to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
@@ -254,68 +255,64 @@ pub async fn login_user(
         // if user verification is enabled and the user
         // has not verified - reject the auth
         if is_verification_required() && user_verified != 1 {
-            let err_msg = format!("\
-                User login rejected - the email address: {email} \
-                is not verified");
-            error!("\
-                {tracking_label} - {err_msg}");
+            let err_msg = format!(
+                "User login rejected - the email address: {email} \
+                is not verified"
+            );
+            error!("{tracking_label} - {err_msg}");
             let response = Response::builder()
                 .status(401)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserLogin {
-                            user_id: -1,
-                            email: String::from(""),
-                            state: -1,
-                            verified: -1,
-                            role: String::from(""),
-                            token: String::from(""),
-                            msg: err_msg,
-                        }
-                    ).unwrap()))
-                .unwrap();
-            return Ok(response);
-        }
-
-        let role: String = row.try_get("role").unwrap();
-        row_list.push((
-            id,
-            email,
-            password,
-            user_state,
-            user_verified,
-            role
-        ))
-    }
-    if row_list.len() == 0 {
-        let response = Response::builder()
-            .status(400)
-            .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserLogin {
+                    serde_json::to_string(&ApiResUserLogin {
                         user_id: -1,
                         email: String::from(""),
                         state: -1,
                         verified: -1,
                         role: String::from(""),
                         token: String::from(""),
-                        msg: format!("\
-                            User login failed - user does not exist with email={}",
-                            user_object.email)
-                    }
-                ).unwrap()))
-            .unwrap();
-        return Ok(response);
+                        msg: err_msg,
+                    })
+                    .unwrap(),
+                ))
+                .unwrap();
+            return Ok(response);
+        }
+
+        let role: String = row.try_get("role").unwrap();
+        row_list.push((id, email, password, user_state, user_verified, role))
     }
-    else {
-        let user_id = row_list[0].0.clone();
-        let user_email = row_list[0].1.clone();
+    if row_list.is_empty() {
+        let response = Response::builder()
+            .status(400)
+            .body(Body::from(
+                serde_json::to_string(&ApiResUserLogin {
+                    user_id: -1,
+                    email: String::from(""),
+                    state: -1,
+                    verified: -1,
+                    role: String::from(""),
+                    token: String::from(""),
+                    msg: format!(
+                        "User login failed - user does not exist with email={}",
+                        user_object.email
+                    ),
+                })
+                .unwrap(),
+            ))
+            .unwrap();
+        Ok(response)
+    } else {
+        let user_id = row_list[0].0;
+        let user_email = row_list[0].1.to_string();
         let user_token = match create_user_token(
-                tracking_label,
-                config,
-                &conn,
-                &user_email,
-                user_id).await {
+            tracking_label,
+            config,
+            &conn,
+            &user_email,
+            user_id,
+        )
+        .await
+        {
             Ok(user_token) => user_token,
             Err(_) => {
                 let response = Response::builder()
@@ -329,8 +326,7 @@ pub async fn login_user(
                                 verified: -1,
                                 role: String::from(""),
                                 token: String::from(""),
-                                msg: format!("\
-                                    User login failed - unable to create user token for user_id={user_id} email={}",
+                                msg: format!("User login failed - unable to create user token for user_id={user_id} email={}",
                                     user_object.email)
                             }
                         ).unwrap()))
@@ -341,18 +337,18 @@ pub async fn login_user(
         let response = Response::builder()
             .status(201)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserLogin {
-                        user_id: user_id,
-                        email: user_email,
-                        state: row_list[0].3.clone(),
-                        verified: row_list[0].4.clone(),
-                        role: row_list[0].5.clone(),
-                        token: user_token,
-                        msg: format!("success"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserLogin {
+                    user_id,
+                    email: user_email,
+                    state: row_list[0].3,
+                    verified: row_list[0].4,
+                    role: row_list[0].5.to_string(),
+                    token: user_token,
+                    msg: "success".to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
-        return Ok(response);
+        Ok(response)
     }
 }

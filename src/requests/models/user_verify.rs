@@ -3,8 +3,8 @@ use postgres_native_tls::MakeTlsConnector;
 use bb8::PooledConnection;
 use bb8_postgres::PostgresConnectionManager;
 
-use serde::Serialize;
 use serde::Deserialize;
+use serde::Serialize;
 
 /// ModelUserVerify
 ///
@@ -29,7 +29,7 @@ use serde::Deserialize;
 ///
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ModelUserVerify {
-    pub id: i32, 
+    pub id: i32,
     pub user_id: i32,
     pub token: String,
     pub email: String,
@@ -64,12 +64,11 @@ pub struct ModelUserVerify {
 pub async fn get_user_verify_by_user_id(
     tracking_label: &str,
     user_id: i32,
-    conn: &PooledConnection<'_, PostgresConnectionManager<MakeTlsConnector>>)
--> Result<ModelUserVerify, String>
-{
+    conn: &PooledConnection<'_, PostgresConnectionManager<MakeTlsConnector>>,
+) -> Result<ModelUserVerify, String> {
     // find all user by email and an active state where state == 0
-    let query = format!("\
-        SELECT \
+    let query = format!(
+        "SELECT \
             users_verified.id, \
             users_verified.user_id, \
             users_verified.token, \
@@ -83,38 +82,38 @@ pub async fn get_user_verify_by_user_id(
             users_verified \
         WHERE \
             users_verified.user_id = {user_id} \
-        LIMIT 1;");
+        LIMIT 1;"
+    );
     // println!("{}", query);
     let stmt = conn.prepare(&query).await.unwrap();
     match conn.query(&stmt, &[]).await {
         Ok(query_result) => {
-            for row in query_result.iter() {
+            if let Some(row) = query_result.first() {
                 let id: i32 = row.try_get("id").unwrap();
                 let user_id: i32 = row.try_get("user_id").unwrap();
                 let token: String = row.try_get("token").unwrap();
                 let email: String = row.try_get("email").unwrap();
                 let state: i32 = row.try_get("state").unwrap();
-                let exp_date_utc: chrono::DateTime<chrono::Utc> = 
+                let exp_date_utc: chrono::DateTime<chrono::Utc> =
                     row.try_get("exp_date").unwrap();
-                return Ok(
-                    ModelUserVerify {
-                        id, 
-                        user_id,
-                        token,
-                        email,
-                        state,
-                        exp_date_utc,
-                    });
+                return Ok(ModelUserVerify {
+                    id,
+                    user_id,
+                    token,
+                    email,
+                    state,
+                    exp_date_utc,
+                });
             }
-            return Err(format!("\
-                {tracking_label} - \
-                failed to find any user verify with user_id={user_id}"));
-        },
-        Err(e) => {
-            return Err(format!("\
-                {tracking_label} - \
-                failed to find user verify by user_id={user_id} \
-                with err='{e}'"));
+            Err(format!(
+                "{tracking_label} - \
+                failed to find any user verify with user_id={user_id}"
+            ))
         }
+        Err(e) => Err(format!(
+            "{tracking_label} - \
+                failed to find user verify by user_id={user_id} \
+                with err='{e}'"
+        )),
     }
 }

@@ -1,38 +1,45 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rust-restapi
+  name: "{{ .Values.env.name }}-{{ .Values.env.app.name }}"
 spec:
   selector:
     matchLabels:
-      app: rust-restapi
-  replicas: 1
+      app: "{{ .Values.env.name }}-{{ .Values.env.app.name }}"
+  replicas: {{ .Values.env.app.replicas }}
   template:
     metadata:
       labels:
-        app: rust-restapi
+        app: "{{ .Values.env.name }}-{{ .Values.env.app.name }}"
     spec:
       containers:
-      - name: rust-restapi
+      - name: "{{ .Values.env.app.name }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         ports:
-        - containerPort: 3000
+        - containerPort: {{ .Values.env.app.port }}
         command:
-        - sh
-        - -c
-        - |
-          #!/usr/bin/env bash -e
-          cd /server
-          echo "starting up"
-          echo "/server/target/release/examples/server"
-          /server/target/release/examples/server
+        # https://stackoverflow.com/questions/50951124/multiline-string-to-a-variable-in-a-helm-template
+        {{- range $k, $v := .Values.env.app.command }}
+        - {{ . | toYaml | indent 10 | trim }}
+        {{- end }}
+        # or inline the command here in the templae:
+        # command:
+        # - sh
+        # - -c
+        # - |
+        #   #!/usr/bin/env bash -e
+        #    cd /server
+        #   echo "starting up"
+        #   env | sort
+        #   echo "/server/target/release/examples/server"
+        #   /server/target/release/examples/server
         env:
         # api
         - name: SERVER_NAME_API
-          value: api
+          value: "{{ .Values.env.app.name }}"
         - name: API_ENDPOINT
-          value: 0.0.0.0:3000
+          value: "{{ .Values.env.app.host }}:{{ .Values.env.app.port }}"
         - name: API_TLS_DIR
           value: /server/certs/tls/api
         - name: API_TLS_CA
@@ -42,6 +49,9 @@ spec:
         - name: API_TLS_KEY
           value: /server/certs/tls/api/api.key
         # db
+        - name: DB_NAME
+          # name of the db
+          value: "{{ .Values.env.db.name }}"
         - name: POSTGRES_TLS_DIR
           value: /server/certs/tls/postgres
         - name: POSTGRES_TLS_CA
@@ -53,33 +63,45 @@ spec:
         - name: POSTGRES_DB_CONN_TYPE
           value: postgresql
         - name: POSTGRES_ENDPOINT
-          value: postgres.default.svc.cluster.local:5432
+          value: "{{ .Values.env.db.endpoint }}"
         - name: POSTGRES_USERNAME
-          value: datawriter
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.env.name }}-{{ .Values.env.app.name }}-db-credentials"
+              key: username
         - name: POSTGRES_PASSWORD
-          value: "123321"
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.env.name }}-{{ .Values.env.app.name }}-db-credentials"
+              key: password
+        # aws
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.env.name }}-{{ .Values.env.app.name }}-s3-credentials"
+              key: access-key
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.env.name }}-{{ .Values.env.app.name }}-s3-credentials"
+              key: secret-key
         # s3
         - name: S3_DATA_BUCKET
-          value: YOUR_BUCKET
+          value: "{{ .Values.env.s3.data.bucket }}"
         - name: S3_DATA_PREFIX
-          value: /rust-restapi/tests
+          value: "{{ .Values.env.s3.data.prefix }}"
         - name: S3_STORAGE_CLASS
-          value: STANDARD
+          value: "{{ .Values.env.s3.data.storage_class }}"
         # disable s3 uploads by setting to "1"
         - name: S3_DATA_UPLOAD_TO_S3
-          value: "0"
+          value: "{{ .Values.env.s3.data.uploads_disabled }}"
         # jwt
         - name: TOKEN_EXPIRATION_SECONDS_INTO_FUTURE
-          # 30 days
-          value: "2592000"
-          # 7 days
-          # value: "604800"
-          # 1 days
-          # value: "86400"
+          value: "{{ .Values.env.jwt.expiration_in_seconds }}"
         - name: TOKEN_ORG
-          value: example.org
+          value: "{{ .Values.env.jwt.token.org }}"
         - name: TOKEN_HEADER
-          value: Bearer
+          value: "{{ .Values.env.jwt.token.header }}"
         - name: TOKEN_ALGO_PRIVATE_KEY
           # must be in pkcs8 format
           value: /server/certs/tls/jwt/private-key.pem
@@ -88,69 +110,58 @@ spec:
         - name: SERVER_PKI_DIR_JWT
           value: /server/certs/tls/jwt
         # auth
-        - name: USER_EMAIL_VERIFICATION_REQUIRED
-          # by setting to "0" this allows unverified user's login
-          value: "0"
         - name: USER_EMAIL_VERIFICATION_ENABLED
-          value: "1"
+          value: "{{ .Values.env.app.user.email.verification.enabled }}"
+        - name: USER_EMAIL_VERIFICATION_REQUIRED
+          value: "{{ .Values.env.app.user.email.verification.required_for_login }}"
         - name: USER_EMAIL_VERIFICATION_EXP_IN_SECONDS
-          # 30 days
-          value: "2592000"
-          # 7 days
-          # value: "604800"
-          # 1 days
-          # value: "86400"
+          value: "{{ .Values.env.app.user.email.verification.expiration_in_seconds }}"
         - name: USER_OTP_EXP_IN_SECONDS
-          # 30 days
-          value: "2592000"
-          # 7 days
-          # value: "604800"
-          # 1 days
-          # value: "86400"
+          value: "{{ .Values.env.app.user.auth.otp.expiration_in_seconds }}"
         - name: SERVER_PASSWORD_SALT
-          value: 694bbbd3-a553-4e95-a5d9-d3673084a123
+          value: "{{ .Values.env.app.user.auth.salt.password }}"
         # tracking in logs
         - name: SERVER_NAME_LABEL
-          value: rust-restapi
+          value: "{{ .Values.env.app.log.name }}"
         # debugging
         - name: RUST_BACKTRACE
-          value: "1"
+          value: "{{ .Values.env.app.log.backtrace }}"
         - name: RUST_LOG
-          value: info
+          value: "{{ .Values.env.app.log.level }}"
         - name: DEBUG
-          value: "1"
+          value: "{{ .Values.env.app.log.debug }}"
         livenessProbe:
           httpGet:
             path: /metrics
-            port: {{ .Values.service.port | default 3000 }}
+            port: {{ .Values.env.app.port | default 3000 }}
             scheme: HTTPS
           initialDelaySeconds: 5
           timeoutSeconds: 5
         readinessProbe:
           httpGet:
             path: /metrics
-            port: {{ .Values.service.port | default 3000 }}
+            port: {{ .Values.env.app.port | default 3000 }}
             scheme: HTTPS
           initialDelaySeconds: 5
           timeoutSeconds: 5
         volumeMounts:
         - mountPath: "/server/certs/tls/api"
-          name: rust-restapi-tls-api
+          name: "{{ .Values.env.name }}-{{ .Values.env.app.name }}-tls"
           readOnly: true
-        - mountPath: "/server/certs/tls/db"
-          name: rust-restapi-tls-db
+        - mountPath: "/server/certs/tls/postgres"
+          name: "{{ .Values.env.name }}-postgres-tls"
           readOnly: true
         - mountPath: "/server/certs/tls/jwt"
-          name: rust-restapi-jwt-keys
+          name: "{{ .Values.env.name }}-{{ .Values.env.app.name }}-jwt-keys"
           readOnly: true
       # end of containers
       volumes:
-        - name: rust-restapi-tls-api
+        - name: "{{ .Values.env.name }}-{{ .Values.env.app.name }}-tls"
           secret:
-            secretName: rust-restapi-tls-api
-        - name: rust-restapi-tls-db
+            secretName: "{{ .Values.env.name }}-{{ .Values.env.app.name }}-tls"
+        - name: "{{ .Values.env.name }}-postgres-tls"
           secret:
-            secretName: rust-restapi-tls-db
-        - name: rust-restapi-jwt-keys
+            secretName: "{{ .Values.env.name }}-postgres-tls"
+        - name: "{{ .Values.env.name }}-{{ .Values.env.app.name }}-jwt-keys"
           secret:
-            secretName: rust-restapi-jwt-keys
+            secretName: "{{ .Values.env.name }}-{{ .Values.env.app.name }}-jwt-keys"

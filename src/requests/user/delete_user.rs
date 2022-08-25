@@ -16,13 +16,13 @@ use postgres_native_tls::MakeTlsConnector;
 use bb8::Pool;
 use bb8_postgres::PostgresConnectionManager;
 
-use hyper::Body;
-use hyper::Response;
-use hyper::HeaderMap;
 use hyper::header::HeaderValue;
+use hyper::Body;
+use hyper::HeaderMap;
+use hyper::Response;
 
-use serde::Serialize;
 use serde::Deserialize;
+use serde::Serialize;
 
 use crate::core::core_config::CoreConfig;
 
@@ -159,25 +159,26 @@ pub async fn delete_user(
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
     headers: &HeaderMap<HeaderValue>,
-    bytes: &[u8])
--> std::result::Result<Response<Body>, Infallible>
-{
-    let user_object: ApiReqUserDelete = match serde_json::from_slice(&bytes) {
+    bytes: &[u8],
+) -> std::result::Result<Response<Body>, Infallible> {
+    let user_object: ApiReqUserDelete = match serde_json::from_slice(bytes) {
         Ok(uo) => uo,
         Err(_) => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserDelete {
-                            user_id: -1,
-                            email: String::from(""),
-                            state: -1,
-                            verified: -1,
-                            role: String::from(""),
-                            msg: format!("User delete failed - please ensure user_id and user_email were set on the request"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserDelete {
+                        user_id: -1,
+                        email: "".to_string(),
+                        state: -1,
+                        verified: -1,
+                        role: "".to_string(),
+                        msg: ("User delete failed - please ensure user_id \
+                                and user_email were set on the request")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
@@ -185,33 +186,37 @@ pub async fn delete_user(
 
     let conn = db_pool.get().await.unwrap();
     let _token = match validate_user_token(
-            tracking_label,
-            &config,
-            &conn,
-            headers,
-            user_object.user_id).await {
+        tracking_label,
+        config,
+        &conn,
+        headers,
+        user_object.user_id,
+    )
+    .await
+    {
         Ok(_token) => _token,
         Err(_) => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserDelete {
-                            user_id: -1,
-                            email: String::from(""),
-                            state: -1,
-                            verified: -1,
-                            role: String::from(""),
-                            msg: format!("User delete failed due to invalid token"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserDelete {
+                        user_id: -1,
+                        email: "".to_string(),
+                        state: -1,
+                        verified: -1,
+                        role: "".to_string(),
+                        msg: ("User delete failed due to invalid token")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
     };
 
-    let query = format!("\
-        UPDATE \
+    let query = format!(
+        "UPDATE \
             users \
         SET \
             state = 1 \
@@ -223,7 +228,8 @@ pub async fn delete_user(
             users.state, \
             users.verified, \
             users.role;",
-        user_object.email);
+        user_object.email
+    );
     let stmt = conn.prepare(&query).await.unwrap();
     let query_result = match conn.query(&stmt, &[]).await {
         Ok(query_result) => query_result,
@@ -232,72 +238,67 @@ pub async fn delete_user(
             let response = Response::builder()
                 .status(500)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserDelete {
-                            user_id: -1,
-                            email: String::from(""),
-                            state: -1,
-                            verified: -1,
-                            role: String::from(""),
-                            msg: format!("\
-                                User delete failed for email={} \
-                                with err='{err_msg}'",
-                                user_object.email)
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserDelete {
+                        user_id: -1,
+                        email: "".to_string(),
+                        state: -1,
+                        verified: -1,
+                        role: "".to_string(),
+                        msg: format!(
+                            "User delete failed for email={} \
+                            with err='{err_msg}'",
+                            user_object.email
+                        ),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
     };
-    let mut row_list: Vec<(i32, String, i32, i32, String)> = Vec::with_capacity(1);
-    for row in query_result.iter() {
+    let mut row_list: Vec<(i32, String, i32, i32, String)> =
+        Vec::with_capacity(1);
+    if let Some(row) = query_result.first() {
         let id: i32 = row.try_get("id").unwrap();
         let email: String = row.try_get("email").unwrap();
         let user_state: i32 = row.try_get("state").unwrap();
         let user_verified: i32 = row.try_get("verified").unwrap();
         let role: String = row.try_get("role").unwrap();
-        row_list.push((
-            id,
-            email,
-            user_state,
-            user_verified,
-            role
-        ))
+        row_list.push((id, email, user_state, user_verified, role))
     }
-    if row_list.len() == 0 {
+    if row_list.is_empty() {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
                 serde_json::to_string(
                     &ApiResUserDelete {
                         user_id: -1,
-                        email: String::from(""),
+                        email: "".to_string(),
                         state: -1,
                         verified: -1,
-                        role: String::from(""),
-                        msg: format!("\
-                            User creation failed - unable to find user by email={}",
-                            user_object.email)
+                        role: "".to_string(),
+                        msg: format!(
+                            "User creation failed - unable to find user by email={}",
+                                user_object.email)
                     }
                 ).unwrap()))
             .unwrap();
-        return Ok(response);
-    }
-    else {
+        Ok(response)
+    } else {
         let response = Response::builder()
             .status(204)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserDelete {
-                        user_id: row_list[0].0.clone(),
-                        email: row_list[0].1.clone(),
-                        state: row_list[0].2.clone(),
-                        verified: row_list[0].3.clone(),
-                        role: row_list[0].4.clone(),
-                        msg: format!("success"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserDelete {
+                    user_id: row_list[0].0,
+                    email: row_list[0].1.clone(),
+                    state: row_list[0].2,
+                    verified: row_list[0].3,
+                    role: row_list[0].4.clone(),
+                    msg: "success".to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
-        return Ok(response);
+        Ok(response)
     }
 }

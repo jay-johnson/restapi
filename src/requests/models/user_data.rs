@@ -1,5 +1,5 @@
-use serde::Serialize;
 use serde::Deserialize;
+use serde::Serialize;
 
 /// ModelUserData
 ///
@@ -30,7 +30,7 @@ use serde::Deserialize;
 ///   helping debug from the client
 ///
 #[derive(Serialize, Deserialize, Default, Clone)]
-pub struct ModelUserData { 
+pub struct ModelUserData {
     pub user_id: i32,
     pub data_id: i32,
     pub filename: String,
@@ -46,4 +46,4 @@ pub struct ModelUserData {
     pub created_at: String,
     pub updated_at: String,
     pub msg: String,
-} 
+}

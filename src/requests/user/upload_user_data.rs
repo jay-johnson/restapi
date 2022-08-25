@@ -11,21 +11,19 @@
 
 use std::convert::Infallible;
 
-use postgres::Row as data_row;
-
 use postgres_native_tls::MakeTlsConnector;
 
 use bb8::Pool;
 use bb8_postgres::PostgresConnectionManager;
 
 use hyper::body;
-use hyper::Body;
-use hyper::Response;
-use hyper::HeaderMap;
 use hyper::header::HeaderValue;
+use hyper::Body;
+use hyper::HeaderMap;
+use hyper::Response;
 
-use serde::Serialize;
 use serde::Deserialize;
+use serde::Serialize;
 
 use crate::core::core_config::CoreConfig;
 
@@ -33,7 +31,7 @@ use crate::requests::auth::validate_user_token::validate_user_token;
 
 use crate::utils::get_uuid::get_uuid;
 
-use crate::is3::is3::s3_upload_buffer;
+use crate::is3::s3_upload_buffer::s3_upload_buffer;
 
 /// ApiReqUserUploadData
 ///
@@ -191,10 +189,9 @@ pub async fn upload_user_data(
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
     headers: &HeaderMap<HeaderValue>,
-    body: hyper::Body)
--> std::result::Result<Response<Body>, Infallible>
-{
-    if ! headers.contains_key("user_id") {
+    body: hyper::Body,
+) -> std::result::Result<Response<Body>, Infallible> {
+    if !headers.contains_key("user_id") {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
@@ -202,13 +199,15 @@ pub async fn upload_user_data(
                     &ApiResUserUploadData {
                         user_id: -1,
                         data_id: -1,
-                        filename: String::from(""),
-                        data_type: String::from(""),
+                        filename: "".to_string(),
+                        data_type: "".to_string(),
                         size_in_bytes: 0,
-                        comments: String::from(""),
-                        encoding: String::from(""),
-                        sloc: String::from(""),
-                        msg: format!("Missing required header 'user_id' key (i.e. curl -H 'user_id: INT'"),
+                        comments: "".to_string(),
+                        encoding: "".to_string(),
+                        sloc: "".to_string(),
+                        msg: (
+                            "Missing required header 'user_id' key (i.e. curl -H 'user_id: INT'"
+                        ).to_string(),
                     }
                 ).unwrap()))
             .unwrap();
@@ -225,20 +224,22 @@ pub async fn upload_user_data(
                         &ApiResUserUploadData {
                             user_id: -1,
                             data_id: -1,
-                            filename: String::from(""),
-                            data_type: String::from(""),
+                            filename: "".to_string(),
+                            data_type: "".to_string(),
                             size_in_bytes: 0,
-                            comments: String::from(""),
-                            encoding: String::from(""),
-                            sloc: String::from(""),
-                            msg: format!("user_id must be a postive number that is the actual user_id for the token"),
+                            comments: "".to_string(),
+                            encoding: "".to_string(),
+                            sloc: "".to_string(),
+                            msg: (
+                                "user_id must be a postive number that is the actual user_id for the token"
+                            ).to_string(),
                         }
                     ).unwrap()))
                 .unwrap();
             return Ok(response);
         }
     };
-    if ! headers.contains_key("filename") {
+    if !headers.contains_key("filename") {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
@@ -246,13 +247,15 @@ pub async fn upload_user_data(
                     &ApiResUserUploadData {
                         user_id: -1,
                         data_id: -1,
-                        filename: String::from(""),
-                        data_type: String::from(""),
+                        filename: "".to_string(),
+                        data_type: "".to_string(),
                         size_in_bytes: 0,
-                        comments: String::from(""),
-                        encoding: String::from(""),
-                        sloc: String::from(""),
-                        msg: format!("Missing required header 'filename' key (i.e. curl -H 'user_id: INT'"),
+                        comments: "".to_string(),
+                        encoding: "".to_string(),
+                        sloc: "".to_string(),
+                        msg: (
+                            "Missing required header 'filename' key (i.e. curl -H 'user_id: INT'"
+                        ).to_string(),
                     }
                 ).unwrap()))
             .unwrap();
@@ -260,8 +263,9 @@ pub async fn upload_user_data(
     }
     let file_name_str = headers.get("filename").unwrap().to_str().unwrap();
     let file_name_len = file_name_str.len();
-    if
-            file_name_len < 1 || file_name_len > 511 {
+
+    // between 1 and 511 chars
+    if !(1..=511).contains(&file_name_len) {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
@@ -269,13 +273,15 @@ pub async fn upload_user_data(
                     &ApiResUserUploadData {
                         user_id: -1,
                         data_id: -1,
-                        filename: String::from(""),
-                        data_type: String::from(""),
+                        filename: "".to_string(),
+                        data_type: "".to_string(),
                         size_in_bytes: 0,
-                        comments: String::from(""),
-                        encoding: String::from(""),
-                        sloc: String::from(""),
-                        msg: format!("The header value for 'filename' must be between 1 and 511 characters"),
+                        comments: "".to_string(),
+                        encoding: "".to_string(),
+                        sloc: "".to_string(),
+                        msg: (
+                            "The header value for 'filename' must be between 1 and 511 characters"
+                        ).to_string(),
                     }
                 ).unwrap()))
             .unwrap();
@@ -283,36 +289,43 @@ pub async fn upload_user_data(
     }
     // -H 'filename: testfile.txt' -H 'data_type: file' -H 'encoding: na' -H 'comments: this is a test comment' -H 'sloc: s3://bucket/prefix'
     let encoding = match headers.get("encoding") {
-        Some(v) => String::from(format!("{}", v.to_str().unwrap())),
-        None => String::from("na"),
+        Some(v) => v.to_str().unwrap().to_string(),
+        None => "na".to_string(),
     };
     let comments = match headers.get("comments") {
-        Some(v) => String::from(format!("{}", v.to_str().unwrap())),
-        None => String::from("file"),
+        Some(v) => v.to_str().unwrap().to_string(),
+        None => "file".to_string(),
     };
     let data_type = match headers.get("data_type") {
-        Some(v) => String::from(format!("{}", v.to_str().unwrap())),
-        None => String::from("file"),
+        Some(v) => v.to_str().unwrap().to_string(),
+        None => "file".to_string(),
     };
     let sloc_start = match headers.get("sloc") {
-        Some(v) => String::from(format!("{}", v.to_str().unwrap())),
-        None => String::from(""),
+        Some(v) => v.to_str().unwrap().to_string(),
+        None => "".to_string(),
     };
     let should_upload_to_s3 = match headers.get("s3_enable") {
         Some(_) => true,
-        None => std::env::var("S3_DATA_UPLOAD_TO_S3").unwrap_or(String::from("0")) == String::from("0"),
+        None => {
+            std::env::var("S3_DATA_UPLOAD_TO_S3")
+                .unwrap_or_else(|_| "0".to_string())
+                == *"0"
+        }
     };
 
-    let s3_bucket = std::env::var("S3_DATA_BUCKET").unwrap_or(String::from("BUCKET_NAME"));
-    let s3_prefix = std::env::var("S3_DATA_PREFIX").unwrap_or(String::from("user/data/file"));
+    let s3_bucket = std::env::var("S3_DATA_BUCKET")
+        .unwrap_or_else(|_| "BUCKET_NAME".to_string());
+    let s3_prefix = std::env::var("S3_DATA_PREFIX")
+        .unwrap_or_else(|_| "user/data/file".to_string());
     let now = chrono::Utc::now();
     let now_str = now.format("%Y/%m/%d");
     let s3_uuid = get_uuid();
-    let s3_key_dst = format!("\
-        {s3_prefix}/\
+    let s3_key_dst = format!(
+        "{s3_prefix}/\
         {user_id}/\
         {now_str}/\
-        {s3_uuid}.{file_name_str}");
+        {s3_uuid}.{file_name_str}"
+    );
     let sloc = match sloc_start.len() {
         0 => {
             format!("s3://{s3_bucket}/{s3_key_dst}")
@@ -323,11 +336,14 @@ pub async fn upload_user_data(
     {
         let conn = db_pool.get().await.unwrap();
         let _token = match validate_user_token(
-                tracking_label,
-                &config,
-                &conn,
-                headers,
-                user_id).await {
+            tracking_label,
+            config,
+            &conn,
+            headers,
+            user_id,
+        )
+        .await
+        {
             Ok(_token) => _token,
             Err(_) => {
                 let response = Response::builder()
@@ -337,14 +353,15 @@ pub async fn upload_user_data(
                             &ApiResUserUploadData {
                                 user_id: -1,
                                 data_id: -1,
-                                filename: String::from(""),
-                                data_type: String::from(""),
+                                filename: "".to_string(),
+                                data_type: "".to_string(),
                                 size_in_bytes: 0,
-                                comments: String::from(""),
-                                encoding: String::from(""),
-                                sloc: String::from(""),
-                                msg: format!("\
-                                    User data upload failed due to invalid token"),
+                                comments: "".to_string(),
+                                encoding: "".to_string(),
+                                sloc: "".to_string(),
+                                msg: ("
+                                    User data upload failed due to invalid token"
+                                ).to_string(),
                             }
                         ).unwrap()))
                 .unwrap();
@@ -356,60 +373,56 @@ pub async fn upload_user_data(
     info!("{tracking_label} - receiving user_id={user_id} name={file_name_str} data");
     let bytes = body::to_bytes(body).await.unwrap();
     let file_contents_size: usize = bytes.len() as usize;
-    if
-            file_contents_size < 1 {
+    if file_contents_size < 1 {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserUploadData {
-                        user_id: -1,
-                        data_id: -1,
-                        filename: String::from(""),
-                        data_type: String::from(""),
-                        size_in_bytes: 0,
-                        comments: String::from(""),
-                        encoding: String::from(""),
-                        sloc: String::from(""),
-                        msg: format!("No data uploaded in the body"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserUploadData {
+                    user_id: -1,
+                    data_id: -1,
+                    filename: "".to_string(),
+                    data_type: "".to_string(),
+                    size_in_bytes: 0,
+                    comments: "".to_string(),
+                    encoding: "".to_string(),
+                    sloc: "".to_string(),
+                    msg: ("No data uploaded in the body").to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
 
-    let file_contents_size_in_mb: f32 = file_contents_size as f32 / 1024.0 / 1024.0;
+    let file_contents_size_in_mb: f32 =
+        file_contents_size as f32 / 1024.0 / 1024.0;
 
-    info!("\
-        {tracking_label} - processing data for user_id={user_id} \
+    info!(
+        "{tracking_label} - processing data for user_id={user_id} \
         name={file_name_str} \
         size={file_contents_size_in_mb:.2}mb \
         upload_to_s3={should_upload_to_s3} \
-        {sloc}");
+        {sloc}"
+    );
 
     if should_upload_to_s3 {
-        match s3_upload_buffer(
-                    tracking_label,
-                    &s3_bucket,
-                    &s3_key_dst,
-                    &bytes)
-                .await {
+        match s3_upload_buffer(tracking_label, &s3_bucket, &s3_key_dst, &bytes)
+            .await
+        {
             Ok(good_msg) => {
                 info!("{good_msg} - done uploading - {sloc}")
-            },
+            }
             Err(emsg) => {
                 info!("{emsg} - failed uploading {sloc}")
             }
         }
-    }
-    else {
-        info!("\
-            {tracking_label} - not uploading to s3");
+    } else {
+        info!("{tracking_label} - not uploading to s3");
     }
 
     let conn = db_pool.get().await.unwrap();
-    let cur_query = format!("\
-        INSERT INTO \
+    let cur_query = format!(
+        "INSERT INTO \
         users_data (\
             user_id, \
             filename, \
@@ -434,32 +447,32 @@ pub async fn upload_user_data(
             users_data.size_in_bytes,
             users_data.comments,
             users_data.encoding,
-            users_data.sloc;");
+            users_data.sloc;"
+    );
     let stmt = conn.prepare(&cur_query).await.unwrap();
-    let mut query_result: Vec<data_row> = Vec::with_capacity(5);
-    if false {
-        println!("{}", query_result.len());
-    }
-    query_result = match conn.query(&stmt, &[]).await {
+    let query_result = match conn.query(&stmt, &[]).await {
         Ok(query_result) => query_result,
         Err(e) => {
             let err_msg = format!("{}", e);
             let response = Response::builder()
                 .status(500)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserUploadData {
-                            user_id: -1,
-                            data_id: -1,
-                            filename: String::from(""),
-                            data_type: String::from(""),
-                            size_in_bytes: 0,
-                            comments: String::from(""),
-                            encoding: String::from(""),
-                            sloc: String::from(""),
-                            msg: format!("User data upload failed for user_id={user_id} with err='{err_msg}'")
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserUploadData {
+                        user_id: -1,
+                        data_id: -1,
+                        filename: "".to_string(),
+                        data_type: "".to_string(),
+                        size_in_bytes: 0,
+                        comments: "".to_string(),
+                        encoding: "".to_string(),
+                        sloc: "".to_string(),
+                        msg: format!(
+                            "User data upload failed for user_id={user_id} \
+                                with err='{err_msg}'"
+                        ),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
@@ -483,36 +496,33 @@ pub async fn upload_user_data(
             comments: found_comments,
             encoding: found_encoding,
             sloc: found_sloc,
-            msg: format!("success"),
+            msg: "success".to_string(),
         });
     }
-    if row_list.len() == 0 {
+    if row_list.is_empty() {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserUploadData {
-                        user_id: -1,
-                        data_id: -1,
-                        filename: String::from(""),
-                        data_type: String::from(""),
-                        size_in_bytes: 0,
-                        comments: String::from(""),
-                        encoding: String::from(""),
-                        sloc: String::from(""),
-                        msg: format!("no upload data found in db"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserUploadData {
+                    user_id: -1,
+                    data_id: -1,
+                    filename: "".to_string(),
+                    data_type: "".to_string(),
+                    size_in_bytes: 0,
+                    comments: "".to_string(),
+                    encoding: "".to_string(),
+                    sloc: "".to_string(),
+                    msg: ("no upload data found in db").to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
-        return Ok(response);
-    }
-    else {
+        Ok(response)
+    } else {
         let response = Response::builder()
             .status(200)
-            .body(Body::from(
-                serde_json::to_string(&row_list[0])
-                .unwrap()))
+            .body(Body::from(serde_json::to_string(&row_list[0]).unwrap()))
             .unwrap();
-        return Ok(response);
+        Ok(response)
     }
 }

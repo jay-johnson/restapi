@@ -3,8 +3,8 @@ use postgres_native_tls::MakeTlsConnector;
 use bb8::PooledConnection;
 use bb8_postgres::PostgresConnectionManager;
 
-use serde::Serialize;
 use serde::Deserialize;
+use serde::Serialize;
 
 /// ModelUser
 ///
@@ -61,12 +61,11 @@ pub struct ModelUser {
 pub async fn get_user_by_id(
     tracking_label: &str,
     id: i32,
-    conn: &PooledConnection<'_, PostgresConnectionManager<MakeTlsConnector>>)
--> Result<ModelUser, String>
-{
+    conn: &PooledConnection<'_, PostgresConnectionManager<MakeTlsConnector>>,
+) -> Result<ModelUser, String> {
     // find all user by email and an active state where state == 0
-    let query = format!("\
-        SELECT \
+    let query = format!(
+        "SELECT \
             users.id, \
             users.email, \
             users.password, \
@@ -77,36 +76,37 @@ pub async fn get_user_by_id(
             users \
         WHERE \
             users.id = {id} \
-        LIMIT 1;");
+        LIMIT 1;"
+    );
     let stmt = conn.prepare(&query).await.unwrap();
     match conn.query(&stmt, &[]).await {
         Ok(query_result) => {
-            for row in query_result.iter() {
+            // get just the first element
+            if let Some(row) = query_result.first() {
                 let id: i32 = row.try_get("id").unwrap();
                 let email: String = row.try_get("email").unwrap();
                 let password: String = row.try_get("email").unwrap();
                 let state: i32 = row.try_get("state").unwrap();
                 let verified: i32 = row.try_get("verified").unwrap();
                 let role: String = row.try_get("role").unwrap();
-                return Ok(
-                    ModelUser {
-                        id,
-                        email,
-                        password,
-                        state,
-                        verified,
-                        role
-                    });
+                return Ok(ModelUser {
+                    id,
+                    email,
+                    password,
+                    state,
+                    verified,
+                    role,
+                });
             }
-            return Err(format!("\
-                {tracking_label} - \
-                failed to find any user with id={id}"));
-        },
-        Err(e) => {
-            return Err(format!("\
-                {tracking_label} - \
-                failed to find user by id={id} \
-                with err='{e}'"));
+            Err(format!(
+                "{tracking_label} - \
+                failed to find any user with id={id}"
+            ))
         }
+        Err(e) => Err(format!(
+            "{tracking_label} - \
+                failed to find user by id={id} \
+                with err='{e}'"
+        )),
     }
 }

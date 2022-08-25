@@ -39,20 +39,23 @@ use crate::core::server::connection_handler::ConnectionHandler;
 /// * `config` - [`CoreConfig`](crate::core::core_config::CoreConfig) for static values
 ///
 pub async fn core_server(
-    config: &CoreConfig)
--> std::result::Result<String, hyper::Error>
-{
+    config: &CoreConfig,
+) -> std::result::Result<String, hyper::Error> {
     // 1
-    let pool = get_db_pool(&config).await;
+    let pool = get_db_pool(config).await;
     // 2
     let listener = match tokio::net::TcpListener::bind(
-            &config.api_config.socket_addr.unwrap()).await {
+        &config.api_config.socket_addr.unwrap(),
+    )
+    .await
+    {
         Ok(v) => v,
         Err(e) => {
-            let err_msg = format!("\
-                Server startup failed - unable to \
+            let err_msg = format!(
+                "Server startup failed - unable to \
                 open server server_endpoint: {} with err='{e}' - stopping",
-                config.api_config.server_endpoint);
+                config.api_config.server_endpoint
+            );
             error!("{err_msg}");
             panic!("{err_msg}");
         }
@@ -60,9 +63,9 @@ pub async fn core_server(
     let local_addr = listener.local_addr().unwrap();
     // 3
     let http = hyper::server::conn::Http::new();
-    let acceptor = tokio_rustls::TlsAcceptor::from(
-        Arc::new(
-            config.api_config.server_config.clone()));
+    let acceptor = tokio_rustls::TlsAcceptor::from(Arc::new(
+        config.api_config.server_config.clone(),
+    ));
 
     // 4
     loop {
@@ -85,20 +88,26 @@ pub async fn core_server(
                     let handler = ConnectionHandler {
                         config: cloned_config,
                         db_pool: cloned_pool,
-                        local_addr: local_addr,
-                        remote_addr: remote_addr,
+                        local_addr,
+                        remote_addr,
                         // tls is required
-                        tls_info: Some(TlsInfo::from_tls_connection(tls_connection)),
+                        tls_info: Some(TlsInfo::from_tls_connection(
+                            tls_connection,
+                        )),
                     };
                     // 12
-                    if let Err(e) = http.serve_connection(stream, handler).await {
+                    if let Err(e) = http.serve_connection(stream, handler).await
+                    {
                         let err_msg = format!("{e}");
-                        if ! err_msg.contains("connection error: not connected") {
+                        if !err_msg.contains("connection error: not connected")
+                            && !err_msg
+                                .contains("connection error: connection reset")
+                        {
                             error!("hyper server hit an internal error: {e}");
                         }
                     }
-                },
-                Err(e) => error!("hyper server tls error: {e}")
+                }
+                Err(e) => error!("hyper server tls error: {e}"),
             }
         };
         // 8

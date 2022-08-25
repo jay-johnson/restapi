@@ -33,7 +33,7 @@ export USE_AWS_ACCOUNT_ID=""
 export USE_CURRENT_LABEL="generate-new-certs"
 export GENERATE_NEW_CERTS="0"
 export USE_CERT_FILE=""
-export USE_CN="tls-for-demo-stack"
+export USE_CN=""
 export USE_EXPIRATION_IN_DAYS="365"
 export USE_CERT_ZIP_DIR="${SDK_BASE_PATH}/tls"
 export USE_CERT_ZIP_LOC="${USE_CERT_ZIP_DIR}"
@@ -104,6 +104,7 @@ function usage() {
     yellow "${0} has supported arguments:"
     echo ""
     echo " -c - string - path to cert file and current value is: ${USE_CERT_FILE}"
+    echo " -d - string - domain: <example.com>"
     echo " -f - flag - generate new certs even if there are existing ones in the USE_CERT_ZIP_DIR=${USE_CERT_ZIP_DIR} directory and current value is ${GENERATE_NEW_CERTS}"
     echo " -z - string - path to cert creation dir and current value is: ${USE_CERT_ZIP_DIR}"
     echo " -h - flag - show this same usage help message"
@@ -111,10 +112,13 @@ function usage() {
 } # usage - end
 
 # Call getopt to validate the provided input.
-while getopts ":c:fz:h" o; do
+while getopts ":c:d:fz:h" o; do
     case "${o}" in
     c)
         export USE_CERT_FILE="${OPTARG}"
+        ;;
+    d)
+        export USE_CN="${OPTARG}"
         ;;
     f)
         export GENERATE_NEW_CERTS="1"
@@ -145,6 +149,10 @@ elif [[ ! -e "${USE_CERT_FILE}" ]]; then
     usage
     err "there is no cert file at path: -c PATH_TO_CERT_FILE"
     exit 1
+elif [[ "${USE_CN}" == "" ]]; then
+    usage
+    err "missing -d DOMAIN (like: example.com)"
+    exit 1
 fi
 
 function extract_tls_assets_from_p12s() {
@@ -160,35 +168,48 @@ function extract_tls_assets_from_p12s() {
             var_ca_path="./${var_cert_dir}/${var_cert_dir}-ca.pem"
             var_chain_path="./${var_cert_dir}/${var_cert_dir}-chain.pem"
 
+            var_requires_legacy_arg=""
+            var_is_openssl_version_1=$(openssl version | grep -c "OpenSSL 1.")
+            if [[ "${var_is_openssl_version_1}" -eq 0 ]]; then
+                var_is_openssl_version_3=$(openssl version | grep -c "OpenSSL 3.")
+                if [[ "${var_is_openssl_version_3}" -eq 0 ]]; then
+                    err "unsupported openssl version detected - only 1.x and 3.x are supported"
+                    exit 1
+                else
+                    # -legacy required on openssl 3.x version but not 1.x
+                    var_requires_legacy_arg="-legacy"
+                fi
+            fi
+
             info "extracting ${var_extract_p12} key=${var_key_path}"
-            openssl pkcs12 -in "${var_extract_p12}" -passout pass:'' -passin pass:'' -nocerts -nodes | sed -ne '/-BEGIN PRIVATE KEY-/,/-END PRIVATE KEY-/p' > "${var_key_path}"
+            openssl pkcs12 "${var_requires_legacy_arg}" -in "${var_extract_p12}" -passout pass:'' -passin pass:'' -nocerts -nodes | sed -ne '/-BEGIN PRIVATE KEY-/,/-END PRIVATE KEY-/p' > "${var_key_path}"
             var_last_status="$?"
             if [[ "${var_last_status}" -ne 0 ]]; then
                 err "failed to extract KEY: ${var_cert_path} with command:"
                 echo ""
-                echo "openssl pkcs12 -in \"${var_extract_p12}\" -passout pass:'' -passin pass:'' -nocerts -nodes | sed -ne '/-BEGIN PRIVATE KEY-/,/-END PRIVATE KEY-/p' > \"${var_key_path}\""
+                echo "openssl pkcs12 ${var_requires_legacy_arg} -in \"${var_extract_p12}\" -passout pass:'' -passin pass:'' -nocerts -nodes | sed -ne '/-BEGIN PRIVATE KEY-/,/-END PRIVATE KEY-/p' > \"${var_key_path}\""
                 echo ""
                 exit 1
             fi
 
             info "extracting ${var_extract_p12} cert=${var_cert_path}"
-            openssl pkcs12 -in "${var_extract_p12}" -clcerts -nokeys -passout pass:'' -passin pass:'' | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > "${var_cert_path}"
+            openssl pkcs12 "${var_requires_legacy_arg}" -in "${var_extract_p12}" -clcerts -nokeys -passout pass:'' -passin pass:'' | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > "${var_cert_path}"
             var_last_status="$?"
             if [[ "${var_last_status}" -ne 0 ]]; then
                 err "failed to extract CERT: ${var_cert_path} with command:"
                 echo ""
-                echo "openssl pkcs12 -in \"${var_extract_p12}\" -clcerts -nokeys -passout pass:'' -passin pass:'' | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > \"${var_cert_path}\""
+                echo "openssl pkcs12 ${var_requires_legacy_arg} -in \"${var_extract_p12}\" -clcerts -nokeys -passout pass:'' -passin pass:'' | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > \"${var_cert_path}\""
                 echo ""
                 exit 1
             fi
 
             info "extracting ${var_extract_p12} ca=${var_ca_path}"
-            openssl pkcs12 -in "${var_extract_p12}" -passout pass:'' -passin pass:'' -cacerts -nokeys -chain | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > "${var_ca_path}"
+            openssl pkcs12 "${var_requires_legacy_arg}" -in "${var_extract_p12}" -passout pass:'' -passin pass:'' -cacerts -nokeys -chain | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > "${var_ca_path}"
             var_last_status="$?"
             if [[ "${var_last_status}" -ne 0 ]]; then
                 err "failed to extract CA: ${var_cert_path} with command:"
                 echo ""
-                echo "openssl pkcs12 -in \"${var_extract_p12}\" -clcerts -nokeys -passout pass:'' -passin pass:'' | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > \"${var_cert_path}\""
+                echo "openssl pkcs12 ${var_requires_legacy_arg} -in \"${var_extract_p12}\" -clcerts -nokeys -passout pass:'' -passin pass:'' | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > \"${var_cert_path}\""
                 echo ""
                 exit 1
             fi

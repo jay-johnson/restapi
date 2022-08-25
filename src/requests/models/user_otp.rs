@@ -3,8 +3,8 @@ use postgres_native_tls::MakeTlsConnector;
 use bb8::PooledConnection;
 use bb8_postgres::PostgresConnectionManager;
 
-use serde::Serialize;
 use serde::Deserialize;
+use serde::Serialize;
 
 /// ModelUserOtp
 ///
@@ -32,7 +32,7 @@ use serde::Deserialize;
 ///
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ModelUserOtp {
-    pub id: i32, 
+    pub id: i32,
     pub user_id: i32,
     pub token: String,
     pub email: String,
@@ -72,12 +72,11 @@ pub async fn get_user_otp(
     user_id: i32,
     email: &str,
     token: &str,
-    conn: &PooledConnection<'_, PostgresConnectionManager<MakeTlsConnector>>)
--> Result<ModelUserOtp, String>
-{
+    conn: &PooledConnection<'_, PostgresConnectionManager<MakeTlsConnector>>,
+) -> Result<ModelUserOtp, String> {
     // find all user by email and an active state where state == 0
-    let query = format!("\
-        SELECT \
+    let query = format!(
+        "SELECT \
             users_otp.id, \
             users_otp.user_id, \
             users_otp.token, \
@@ -94,47 +93,45 @@ pub async fn get_user_otp(
             users_otp.token = '{token}' \
             AND \
             users_otp.email = '{email}' \
-        LIMIT 1;");
+        LIMIT 1;"
+    );
     // println!("{}", query);
     let stmt = conn.prepare(&query).await.unwrap();
     match conn.query(&stmt, &[]).await {
         Ok(query_result) => {
-            for row in query_result.iter() {
+            if let Some(row) = query_result.first() {
                 let found_db_id: i32 = row.try_get("id").unwrap();
                 let found_user_id: i32 = row.try_get("user_id").unwrap();
                 let found_token: String = row.try_get("token").unwrap();
                 let found_email: String = row.try_get("email").unwrap();
                 let found_state: i32 = row.try_get("state").unwrap();
-                let found_exp_date_utc: chrono::DateTime<chrono::Utc> = 
+                let found_exp_date_utc: chrono::DateTime<chrono::Utc> =
                     row.try_get("exp_date").unwrap();
-                let found_consumed_date_utc: Option<chrono::DateTime<chrono::Utc>> = 
-                    match row.try_get("consumed_date").unwrap() {
-                        Some(v) => Some(v),
-                        None => None
-                };
-                return Ok(
-                    ModelUserOtp {
-                        id: found_db_id, 
-                        user_id: found_user_id,
-                        token: found_token,
-                        email: found_email,
-                        state: found_state,
-                        exp_date_utc: found_exp_date_utc,
-                        consumed_date_utc: found_consumed_date_utc,
-                    });
+                let found_consumed_date_utc: Option<
+                    chrono::DateTime<chrono::Utc>,
+                > = row.try_get("consumed_date").unwrap();
+                return Ok(ModelUserOtp {
+                    id: found_db_id,
+                    user_id: found_user_id,
+                    token: found_token,
+                    email: found_email,
+                    state: found_state,
+                    exp_date_utc: found_exp_date_utc,
+                    consumed_date_utc: found_consumed_date_utc,
+                });
             }
-            return Err(format!("\
-                {tracking_label} - \
+            Err(format!(
+                "{tracking_label} - \
                 failed to find any user one-time-password \
                 by user_id={user_id} \
-                email={email}"));
-        },
-        Err(e) => {
-            return Err(format!("\
-                {tracking_label} - \
+                email={email}"
+            ))
+        }
+        Err(e) => Err(format!(
+            "{tracking_label} - \
                 failed to find user one-time-password \
                 by user_id={user_id} \
-                with err='{e}'"));
-        }
+                with err='{e}'"
+        )),
     }
 }

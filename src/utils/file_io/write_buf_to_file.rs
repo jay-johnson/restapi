@@ -1,6 +1,6 @@
+use log::error;
 use log::info;
 use log::trace;
-use log::error;
 
 use std::fs::File;
 use std::io::BufWriter;
@@ -35,29 +35,28 @@ use std::io::Write;
 /// ```
 ///
 pub async fn write_buf_to_file(
-        file_path: &str,
-        buf: &Vec<u8>,
-        overwrite: bool)
--> bool
-{
-    if ! overwrite && std::fs::metadata(&file_path).is_ok() {
-        error!("\
-            write_buf_to_file - file already exists: {file_path} \
-            not overwriting");
+    file_path: &str,
+    buf: &Vec<u8>,
+    overwrite: bool,
+) -> bool {
+    if !overwrite && std::fs::metadata(&file_path).is_ok() {
+        error!(
+            "write_buf_to_file - file already exists: {file_path} \
+            not overwriting"
+        );
         return false;
     }
-    trace!("\
-        write_buf_to_file - creating {file_path}");
+    trace!("write_buf_to_file - creating {file_path}");
     // https://stackoverflow.com/questions/49983101/serialization-of-large-struct-to-disk-with-serde-and-bincode-is-slow
     let mut file_buf_writer = BufWriter::new(File::create(file_path).unwrap());
-    file_buf_writer.write_all(&buf).unwrap();
-    if ! std::fs::metadata(&file_path).is_ok() {
-        error!("\
-            write_buf_to_file - failed to save file: {file_path}");
+    file_buf_writer.write_all(buf).unwrap();
+    if std::fs::metadata(&file_path).is_err() {
+        error!("write_buf_to_file - failed to save file: {file_path}");
         return false;
     }
-    info!("\
-        write_buf_to_file - wrote {} bytes to {file_path}",
-        buf.len());
-    return true;
+    info!(
+        "write_buf_to_file - wrote {} bytes to {file_path}",
+        buf.len()
+    );
+    true
 }

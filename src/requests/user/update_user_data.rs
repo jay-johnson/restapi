@@ -11,19 +11,18 @@
 
 use std::convert::Infallible;
 
-use postgres::Row as data_row;
 use postgres_native_tls::MakeTlsConnector;
 
 use bb8::Pool;
 use bb8_postgres::PostgresConnectionManager;
 
-use hyper::Body;
-use hyper::Response;
-use hyper::HeaderMap;
 use hyper::header::HeaderValue;
+use hyper::Body;
+use hyper::HeaderMap;
+use hyper::Response;
 
-use serde::Serialize;
 use serde::Deserialize;
+use serde::Serialize;
 
 use crate::core::core_config::CoreConfig;
 
@@ -70,108 +69,99 @@ pub struct ApiReqUserUpdateData {
     pub data_type: Option<String>,
     pub comments: Option<String>,
     pub encoding: Option<String>,
-    pub sloc: Option<String>
+    pub sloc: Option<String>,
 }
 
 /// implementation for wrapping complex sql statement creation
 impl ApiReqUserUpdateData {
-
     /// get_sql
     ///
     /// Build the update sql statement based off the
     /// object's values
     ///
-    pub fn get_sql(
-            &self) -> String {
-        let mut update_value: String = format!("\
-            UPDATE \
+    pub fn get_sql(&self) -> String {
+        let mut update_value = ("UPDATE \
                 users_data \
-            SET ");
+            SET ")
+            .to_string();
         let mut num_params = 0;
         match &self.filename {
             Some(v) => {
                 match num_params {
                     0 => {
-                        update_value = format!("\
-                            {update_value} filename = '{v}'")
-                    },
+                        update_value =
+                            format!("{update_value} filename = '{v}'")
+                    }
                     _ => {
-                        update_value = format!("\
-                            {update_value}, filename = '{v}'")
+                        update_value =
+                            format!("{update_value}, filename = '{v}'")
                     }
                 }
                 num_params += 1;
                 0
-            },
-            None => {
-                1
             }
+            None => 1,
         };
         match &self.data_type {
             Some(v) => {
                 match num_params {
                     0 => {
-                        update_value = format!("\
-                            {update_value} data_type = '{v}'")
-                    },
+                        update_value =
+                            format!("{update_value} data_type = '{v}'")
+                    }
                     _ => {
-                        update_value = format!("\
-                            {update_value}, data_type = '{v}'")
+                        update_value =
+                            format!("{update_value}, data_type = '{v}'")
                     }
                 }
                 num_params += 1;
                 0
-            },
-            None => {
-                1
             }
+            None => 1,
         };
         match &self.comments {
             Some(v) => {
                 match num_params {
                     0 => {
-                        update_value = format!("\
-                            {update_value} comments = '{v}'")
-                    },
+                        update_value =
+                            format!("{update_value} comments = '{v}'")
+                    }
                     _ => {
-                        update_value = format!("\
-                            {update_value}, comments = '{v}'")
+                        update_value =
+                            format!("{update_value}, comments = '{v}'")
                     }
                 }
                 num_params += 1;
                 0
-            },
-            None => {
-                1
             }
+            None => 1,
         };
         match &self.encoding {
             Some(v) => {
                 match num_params {
                     0 => {
-                        update_value = format!("\
-                            {update_value} encoding = '{v}'")
-                    },
+                        update_value =
+                            format!("{update_value} encoding = '{v}'")
+                    }
                     _ => {
-                        update_value = format!("\
-                            {update_value}, encoding = '{v}'")
+                        update_value =
+                            format!("{update_value}, encoding = '{v}'")
                     }
                 }
                 num_params += 1;
                 0
-            },
-            None => {
-                1
             }
+            None => 1,
         };
         if false {
-            println!("\
-                ApiReqUserUpdateData \
-                num_params={num_params}");
+            println!(
+                "ApiReqUserUpdateData \
+                num_params={num_params}"
+            );
         }
         // info!("ApiReqUserUpdateData query: {cur_query}");
-        return String::from(format!("\
-                {} \
+        format!(
+            "{} \
                 WHERE \
                     users_data.id = {} \
                 RETURNING \
@@ -185,8 +175,8 @@ impl ApiReqUserUpdateData {
                     users_data.sloc, \
                     users_data.created_at, \
                     users_data.updated_at",
-                update_value,
-                self.data_id));
+            update_value, self.data_id
+        )
     }
 }
 
@@ -274,27 +264,27 @@ pub async fn update_user_data(
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
     headers: &HeaderMap<HeaderValue>,
-    bytes: &[u8])
--> std::result::Result<Response<Body>, Infallible>
-{
-    let user_object: ApiReqUserUpdateData = match serde_json::from_slice(&bytes) {
+    bytes: &[u8],
+) -> std::result::Result<Response<Body>, Infallible> {
+    let user_object: ApiReqUserUpdateData = match serde_json::from_slice(bytes)
+    {
         Ok(uo) => uo,
         Err(_) => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserUpdateData {
-                            data: ModelUserData::default(),
-                            msg: format!("\
-                                User update data failed - please ensure \
-                                user_id and id are set \
-                                with optional arguments \
-                                filename, size_in_bytes, \
-                                comments, data_type, encoding \
-                                were set correctly in the request"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserUpdateData {
+                        data: ModelUserData::default(),
+                        msg: ("User update data failed - please ensure \
+                            user_id and id are set \
+                            with optional arguments \
+                            filename, size_in_bytes, \
+                            comments, data_type, encoding \
+                            were set correctly in the request")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
@@ -302,52 +292,49 @@ pub async fn update_user_data(
     let user_id = user_object.user_id;
     let conn = db_pool.get().await.unwrap();
     let _token = match validate_user_token(
-            tracking_label,
-            &config,
-            &conn,
-            headers,
-            user_object.user_id).await {
+        tracking_label,
+        config,
+        &conn,
+        headers,
+        user_object.user_id,
+    )
+    .await
+    {
         Ok(_token) => _token,
         Err(_) => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserUpdateData {
-                            data: ModelUserData::default(),
-                            msg: format!("\
-                                User update data failed due to invalid token"),
-                        }
-                    ).unwrap()))
-            .unwrap();
+                    serde_json::to_string(&ApiResUserUpdateData {
+                        data: ModelUserData::default(),
+                        msg: ("User update data failed due to invalid token")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
+                .unwrap();
             return Ok(response);
         }
     };
 
     let cur_query = user_object.get_sql();
-    if false {
-        println!("\
-            {tracking_label} - \
-            user update data user_id={user_id} \
-            query=\"{cur_query}\"");
-    }
-
     let stmt = conn.prepare(&cur_query).await.unwrap();
-    let mut query_result: Vec<data_row> = Vec::with_capacity(100);
-    if false { println!("{}", query_result.len()); }
-    query_result = match conn.query(&stmt, &[]).await {
+    let query_result = match conn.query(&stmt, &[]).await {
         Ok(query_result) => query_result,
         Err(e) => {
             let err_msg = format!("{e}");
             let response = Response::builder()
                 .status(500)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserUpdateData {
-                            data: ModelUserData::default(),
-                            msg: format!("User update data failed for user_id={user_id} with err='{err_msg}'")
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserUpdateData {
+                        data: ModelUserData::default(),
+                        msg: format!(
+                            "User update data failed for user_id={user_id} \
+                                with err='{err_msg}'"
+                        ),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
@@ -362,15 +349,14 @@ pub async fn update_user_data(
         let found_comments: String = row.try_get("comments").unwrap();
         let found_encoding: String = row.try_get("encoding").unwrap();
         let found_sloc: String = row.try_get("sloc").unwrap();
-        let created_at_utc: chrono::DateTime<chrono::Utc> = row.try_get("created_at").unwrap();
+        let created_at_utc: chrono::DateTime<chrono::Utc> =
+            row.try_get("created_at").unwrap();
         let updated_at_str: String = match row.try_get("updated_at") {
             Ok(v) => {
                 let updated_at_utc: chrono::DateTime<chrono::Utc> = v;
                 format!("{}", updated_at_utc.format("%Y-%m-%dT%H:%M:%SZ"))
-            },
-            Err(_) => {
-                format!("")
             }
+            Err(_) => "".to_string(),
         };
         row_list.push(ModelUserData {
             user_id: found_user_id,
@@ -381,35 +367,37 @@ pub async fn update_user_data(
             comments: found_comments,
             encoding: found_encoding,
             sloc: found_sloc,
-            created_at: format!("{}", created_at_utc.format("%Y-%m-%dT%H:%M:%SZ")),
+            created_at: format!(
+                "{}",
+                created_at_utc.format("%Y-%m-%dT%H:%M:%SZ")
+            ),
             updated_at: updated_at_str,
-            msg: format!("success"),
+            msg: "success".to_string(),
         });
     }
-    if row_list.len() == 0 {
+    if row_list.is_empty() {
         let response = Response::builder()
             .status(200)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserUpdateData {
-                        data: ModelUserData::default(),
-                        msg: format!("no update data found"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserUpdateData {
+                    data: ModelUserData::default(),
+                    msg: "no update data found".to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
-        return Ok(response);
-    }
-    else {
+        Ok(response)
+    } else {
         let response = Response::builder()
             .status(200)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserUpdateData {
-                        data: row_list.remove(0),
-                        msg: format!("success"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserUpdateData {
+                    data: row_list.remove(0),
+                    msg: "success".to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
-        return Ok(response);
+        Ok(response)
     }
 }

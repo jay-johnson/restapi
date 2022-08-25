@@ -16,22 +16,22 @@ use postgres_native_tls::MakeTlsConnector;
 use bb8::Pool;
 use bb8_postgres::PostgresConnectionManager;
 
-use hyper::Body;
-use hyper::Response;
-use hyper::HeaderMap;
 use hyper::header::HeaderValue;
+use hyper::Body;
+use hyper::HeaderMap;
+use hyper::Response;
 
-use serde::Serialize;
 use serde::Deserialize;
+use serde::Serialize;
 
-use argon2::Config as argon_config;
 use argon2::hash_encoded as argon_hash_encoded;
+use argon2::Config as argon_config;
 
 use crate::core::core_config::CoreConfig;
 
+use crate::requests::auth::validate_user_token::validate_user_token;
 use crate::requests::models::user::get_user_by_id;
 use crate::requests::models::user_otp::get_user_otp;
-use crate::requests::auth::validate_user_token::validate_user_token;
 
 /// ApiReqUserConsumeOtp
 ///
@@ -163,132 +163,125 @@ pub async fn consume_user_otp(
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
     headers: &HeaderMap<HeaderValue>,
-    bytes: &[u8])
--> std::result::Result<Response<Body>, Infallible>
-{
-    let req_object: ApiReqUserConsumeOtp = match serde_json::from_slice(&bytes) {
+    bytes: &[u8],
+) -> std::result::Result<Response<Body>, Infallible> {
+    let req_object: ApiReqUserConsumeOtp = match serde_json::from_slice(bytes) {
         Ok(uo) => uo,
         Err(_) => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserConsumeOtp {
-                            user_id: -1,
-                            otp_id: -1,
-                            msg: format!("\
-                                User consume one-time-password failed - \
-                                please ensure \
-                                user_id, email, token, and password \
-                                were set correctly in the request"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserConsumeOtp {
+                        user_id: -1,
+                        otp_id: -1,
+                        msg: ("User consume one-time-password failed - \
+                            please ensure \
+                            user_id, email, token, and password \
+                            were set correctly in the request")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
     };
 
     // is this a waste of time because nothing changed
-    if
-            req_object.user_id < 0 {
+    if req_object.user_id < 0 {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserConsumeOtp {
-                        user_id: req_object.user_id,
-                        otp_id: -1,
-                        msg: format!("\
-                            User consume one-time-password failed \
-                            please ensure the \
-                            user_id is a non-negative number"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserConsumeOtp {
+                    user_id: req_object.user_id,
+                    otp_id: -1,
+                    msg: ("User consume one-time-password failed \
+                        please ensure the \
+                        user_id is a non-negative number")
+                        .to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
-    }
-    else if req_object.email == "" {
+    } else if req_object.email.is_empty() {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserConsumeOtp {
-                        user_id: req_object.user_id,
-                        otp_id: -1,
-                        msg: format!("\
-                            User consume one-time-password failed \
-                            please ensure the \
-                            email is set to the user's email address"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserConsumeOtp {
+                    user_id: req_object.user_id,
+                    otp_id: -1,
+                    msg: ("User consume one-time-password failed \
+                        please ensure the \
+                        email is set to the user's email address")
+                        .to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
-    }
-    else if req_object.password == "" {
+    } else if req_object.password.is_empty() {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserConsumeOtp {
-                        user_id: req_object.user_id,
-                        otp_id: -1,
-                        msg: format!("\
-                            User consume one-time-password failed \
-                            please ensure the \
-                            passsword is set"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserConsumeOtp {
+                    user_id: req_object.user_id,
+                    otp_id: -1,
+                    msg: ("User consume one-time-password failed \
+                        please ensure the \
+                        passsword is set")
+                        .to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
-    }
-    else if req_object.password.len() < 4 {
+    } else if req_object.password.len() < 4 {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserConsumeOtp {
-                        user_id: req_object.user_id,
-                        otp_id: -1,
-                        msg: format!("\
-                            User consume one-time-password failed \
-                            please ensure the \
-                            passsword is longer than 4 characters"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserConsumeOtp {
+                    user_id: req_object.user_id,
+                    otp_id: -1,
+                    msg: ("User consume one-time-password failed \
+                        please ensure the \
+                        passsword is longer than 4 characters")
+                        .to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
-    }
-    else if req_object.token.len() < 4 {
+    } else if req_object.token.len() < 4 {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserConsumeOtp {
-                        user_id: req_object.user_id,
-                        otp_id: -1,
-                        msg: format!("\
-                            User consume one-time-password failed \
-                            please ensure the \
-                            token is longer than 4 characters"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserConsumeOtp {
+                    user_id: req_object.user_id,
+                    otp_id: -1,
+                    msg: ("User consume one-time-password failed \
+                        please ensure the \
+                        token is longer than 4 characters")
+                        .to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
-    }
-    else if req_object.token.len() > 256 {
+    } else if req_object.token.len() > 256 {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserConsumeOtp {
-                        user_id: req_object.user_id,
-                        otp_id: -1,
-                        msg: format!("\
-                            User consume one-time-password failed \
-                            please ensure the \
-                            token is shorter than 256 characters"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserConsumeOtp {
+                    user_id: req_object.user_id,
+                    otp_id: -1,
+                    msg: ("User consume one-time-password failed \
+                        please ensure the \
+                        token is shorter than 256 characters")
+                        .to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
@@ -299,100 +292,103 @@ pub async fn consume_user_otp(
     let user_id = user_clone.user_id;
     let user_email = user_clone.email;
     let _token = match validate_user_token(
-            tracking_label,
-            &config,
-            &conn,
-            headers,
-            user_id).await {
+        tracking_label,
+        config,
+        &conn,
+        headers,
+        user_id,
+    )
+    .await
+    {
         Ok(_token) => _token,
         Err(_) => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserConsumeOtp {
-                            user_id: req_object.user_id,
-                            otp_id: -1,
-                            msg: format!("\
-                                User consume one-time-password failed \
-                                due to invalid token"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserConsumeOtp {
+                        user_id: req_object.user_id,
+                        otp_id: -1,
+                        msg: ("User consume one-time-password failed \
+                            due to invalid token")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
     };
 
     // get the user and detect if the email is different
-    let user_model = match get_user_by_id(
-            tracking_label,
-            user_id,
-            &conn).await {
-        Ok(user_model) => {
-            user_model
-        },
+    let user_model = match get_user_by_id(tracking_label, user_id, &conn).await
+    {
+        Ok(user_model) => user_model,
         Err(err_msg) => {
-            error!("\
-                {tracking_label} - \
+            error!(
+                "{tracking_label} - \
                 failed to consume one-time-password user {user_id} \
-                with err='{err_msg}'");
+                with err='{err_msg}'"
+            );
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserConsumeOtp {
-                            user_id: req_object.user_id,
-                            otp_id: -1,
-                            msg: format!("\
-                                User consume one-time-password failed - \
-                                unable to find user with id: {user_id}"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserConsumeOtp {
+                        user_id: req_object.user_id,
+                        otp_id: -1,
+                        msg: format!(
+                            "User consume one-time-password failed - \
+                            unable to find user with id: {user_id}"
+                        ),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
-        },
+        }
     };
 
-    if
-            user_model.email != req_object.email
-            && user_email != user_model.email {
+    if user_model.email != req_object.email && user_email != user_model.email {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserConsumeOtp {
-                        user_id: req_object.user_id,
-                        otp_id: -1,
-                        msg: format!("\
-                            User consume one-time-password failed - \
-                            user_email does not match {}",
-                                req_object.email),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserConsumeOtp {
+                    user_id: req_object.user_id,
+                    otp_id: -1,
+                    msg: format!(
+                        "User consume one-time-password failed - \
+                        user_email does not match {}",
+                        req_object.email
+                    ),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
 
     // get the user one-time-password record
     let user_otp_model = match get_user_otp(
-            &tracking_label,
-            user_id,
-            &req_object.email,
-            &req_object.token,
-            &conn).await {
+        tracking_label,
+        user_id,
+        &req_object.email,
+        &req_object.token,
+        &conn,
+    )
+    .await
+    {
         Ok(rec) => rec,
         Err(_) => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserConsumeOtp {
-                            user_id: req_object.user_id,
-                            otp_id: -1,
-                            msg: format!("\
-                                User one-time-password record does not exist"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserConsumeOtp {
+                        user_id: req_object.user_id,
+                        otp_id: -1,
+                        msg: ("User one-time-password record does not exist")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
@@ -402,59 +398,59 @@ pub async fn consume_user_otp(
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserConsumeOtp {
-                        user_id: req_object.user_id,
-                        otp_id: -1,
-                        msg: format!("\
-                            User one-time-password token={} does not match \
-                            db otp_token={}",
-                            req_object.token,
-                            user_otp_model.token),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserConsumeOtp {
+                    user_id: req_object.user_id,
+                    otp_id: -1,
+                    msg: format!(
+                        "User one-time-password token={} does not match \
+                        db otp_token={}",
+                        req_object.token, user_otp_model.token
+                    ),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
 
     let now: chrono::DateTime<chrono::Utc> = chrono::Utc::now();
-    let exp_vs_now_diff = now.signed_duration_since(
-        user_otp_model.exp_date_utc);
+    let exp_vs_now_diff =
+        now.signed_duration_since(user_otp_model.exp_date_utc);
     let exp_date_vs_now = exp_vs_now_diff.num_seconds();
 
     // check if the token is expired
     // now - exp_date > 0 == expired
     if exp_date_vs_now > 0 {
-        let err_msg = format!("\
-            {tracking_label} - user {user_id} \
+        let err_msg = format!(
+            "{tracking_label} - user {user_id} \
             one-time-password token {} \
             expired on: \
             exp_date={} \
             duration_since={exp_date_vs_now}s",
-            req_object.token,
-            user_otp_model.exp_date_utc);
+            req_object.token, user_otp_model.exp_date_utc
+        );
         error!("{err_msg}");
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserConsumeOtp {
-                        user_id: req_object.user_id,
-                        otp_id: -1,
-                        msg: format!("\
-                            User one-time-password has expired"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserConsumeOtp {
+                    user_id: req_object.user_id,
+                    otp_id: -1,
+                    msg: ("User one-time-password has expired").to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
 
-    info!("\
-        {tracking_label} - \
-        consuming user {user_id} otp");
+    info!(
+        "{tracking_label} - \
+        consuming user {user_id} otp"
+    );
 
-    let cur_query = format!("\
-        UPDATE \
+    let cur_query = format!(
+        "UPDATE \
             users_otp \
         SET \
             state = 1, \
@@ -474,7 +470,8 @@ pub async fn consume_user_otp(
             users_otp.email, \
             users_otp.state, \
             users_otp.exp_date;",
-                req_object.token);
+        req_object.token
+    );
 
     let stmt = conn.prepare(&cur_query).await.unwrap();
     let query_result = match conn.query(&stmt, &[]).await {
@@ -483,38 +480,41 @@ pub async fn consume_user_otp(
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserConsumeOtp {
-                            user_id: req_object.user_id,
-                            otp_id: -1,
-                            msg: format!("\
-                                User consume one-time-password failed \
-                                for user_id={user_id} {user_email} \
-                                with err='{e}'")
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserConsumeOtp {
+                        user_id: req_object.user_id,
+                        otp_id: -1,
+                        msg: format!(
+                            "User consume one-time-password failed \
+                            for user_id={user_id} {user_email} \
+                            with err='{e}'"
+                        ),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
-        },
+        }
     };
 
     // must match up with RETURNING
-    for row in query_result.iter() {
-
+    if let Some(row) = query_result.first() {
         // salt the user's password
         let argon_config = argon_config::default();
         let new_password = argon_hash_encoded(
             req_object.password.as_bytes(),
             &config.server_password_salt,
-            &argon_config).unwrap();
+            &argon_config,
+        )
+        .unwrap();
 
-        let update_user_query = format!("\
-            UPDATE \
+        let update_user_query = format!(
+            "UPDATE \
                 users \
             SET \
                 password = '{new_password}' \
             WHERE \
-                users.id = {user_id};");
+                users.id = {user_id};"
+        );
         let stmt = conn.prepare(&update_user_query).await.unwrap();
         let _ = match conn.query(&stmt, &[]).await {
             Ok(query_result) => query_result,
@@ -522,48 +522,49 @@ pub async fn consume_user_otp(
                 let response = Response::builder()
                     .status(400)
                     .body(Body::from(
-                        serde_json::to_string(
-                            &ApiResUserConsumeOtp {
-                                user_id: req_object.user_id,
-                                otp_id: -1,
-                                msg: format!("\
-                                    User consume one-time-password failed \
-                                    to reset user's password for \
-                                    user_id={user_id} {user_email} \
-                                    with err='{e}'")
-                            }
-                        ).unwrap()))
+                        serde_json::to_string(&ApiResUserConsumeOtp {
+                            user_id: req_object.user_id,
+                            otp_id: -1,
+                            msg: format!(
+                                "User consume one-time-password failed \
+                                to reset user's password for \
+                                user_id={user_id} {user_email} \
+                                with err='{e}'"
+                            ),
+                        })
+                        .unwrap(),
+                    ))
                     .unwrap();
                 return Ok(response);
-            },
+            }
         };
-            
+
         let user_otp_id: i32 = row.try_get("id").unwrap();
         let response = Response::builder()
             .status(200)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserConsumeOtp {
-                        user_id: user_id,
-                        otp_id: user_otp_id,
-                        msg: format!("success"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserConsumeOtp {
+                    user_id,
+                    otp_id: user_otp_id,
+                    msg: "success".to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
     let response = Response::builder()
         .status(400)
         .body(Body::from(
-            serde_json::to_string(
-                &ApiResUserConsumeOtp {
-                    user_id: req_object.user_id,
-                    otp_id: -1,
-                    msg: format!("\
-                        User consume one-time-password failed - \
-                        no records found in db"),
-                }
-            ).unwrap()))
+            serde_json::to_string(&ApiResUserConsumeOtp {
+                user_id: req_object.user_id,
+                otp_id: -1,
+                msg: ("User consume one-time-password failed - \
+                    no records found in db")
+                    .to_string(),
+            })
+            .unwrap(),
+        ))
         .unwrap();
-    return Ok(response);
+    Ok(response)
 }

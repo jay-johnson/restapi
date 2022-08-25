@@ -24,10 +24,11 @@
 ///
 /// ```rust
 /// use restapi::requests::user::is_verification_required::is_verification_required;
-/// return is_verification_required(); 
+/// return is_verification_required();
 /// ```
 ///
 pub fn is_verification_required() -> bool {
-    return std::env::var("USER_EMAIL_VERIFICATION_REQUIRED")
-        .unwrap_or(String::from("0")) == String::from("1");
+    std::env::var("USER_EMAIL_VERIFICATION_REQUIRED")
+        .unwrap_or_else(|_| "0".to_string())
+        == *"1"
 }

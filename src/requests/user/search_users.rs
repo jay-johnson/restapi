@@ -11,24 +11,23 @@
 
 use std::convert::Infallible;
 
-use postgres::Row as data_row;
 use postgres_native_tls::MakeTlsConnector;
 
 use bb8::Pool;
 use bb8_postgres::PostgresConnectionManager;
 
-use hyper::Body;
-use hyper::Response;
-use hyper::HeaderMap;
 use hyper::header::HeaderValue;
+use hyper::Body;
+use hyper::HeaderMap;
+use hyper::Response;
 
-use serde::Serialize;
 use serde::Deserialize;
+use serde::Serialize;
 
 use crate::core::core_config::CoreConfig;
 
-use crate::requests::user::get_user::ApiResUserGet;
 use crate::requests::auth::validate_user_token::validate_user_token;
+use crate::requests::user::get_user::ApiResUserGet;
 
 /// ApiReqUserSearch
 ///
@@ -148,40 +147,38 @@ pub async fn search_users(
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
     headers: &HeaderMap<HeaderValue>,
-    bytes: &[u8])
--> std::result::Result<Response<Body>, Infallible>
-{
-    let user_object: ApiReqUserSearch = match serde_json::from_slice(&bytes) {
+    bytes: &[u8],
+) -> std::result::Result<Response<Body>, Infallible> {
+    let user_object: ApiReqUserSearch = match serde_json::from_slice(bytes) {
         Ok(uo) => uo,
         Err(_) => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                        &ApiResUserSearch {
-                            users: Vec::new(),
-                            msg: format!("Missing user_id and email to search"),
-                        }
-                    ).unwrap()))
+                    serde_json::to_string(&ApiResUserSearch {
+                        users: Vec::new(),
+                        msg: ("Missing user_id and email to search")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
                 .unwrap();
             return Ok(response);
         }
     };
-    let user_id: i32 = user_object.user_id.clone();
+    let user_id: i32 = user_object.user_id;
     let user_email: String = user_object.email.clone();
 
-    if
-            user_id < 1
-            || user_email == "" {
+    if user_id < 1 || user_email.is_empty() {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserSearch {
-                        users: Vec::new(),
-                        msg: format!("Missing user_id and email to search"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserSearch {
+                    users: Vec::new(),
+                    msg: ("Missing user_id and email to search").to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
@@ -190,12 +187,13 @@ pub async fn search_users(
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserSearch {
-                        users: Vec::new(),
-                        msg: format!("User search requires at least 3 characters"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserSearch {
+                    users: Vec::new(),
+                    msg: ("User search requires at least 3 characters")
+                        .to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
         return Ok(response);
     }
@@ -204,30 +202,34 @@ pub async fn search_users(
 
     let conn = db_pool.get().await.unwrap();
     let _token = match validate_user_token(
-            tracking_label,
-            &config,
-            &conn,
-            headers,
-            user_object.user_id).await {
+        tracking_label,
+        config,
+        &conn,
+        headers,
+        user_object.user_id,
+    )
+    .await
+    {
         Ok(_token) => _token,
         Err(_) => {
             let response = Response::builder()
                 .status(400)
                 .body(Body::from(
-                    serde_json::to_string(
-                    &ApiResUserSearch {
+                    serde_json::to_string(&ApiResUserSearch {
                         users: Vec::new(),
-                        msg: format!("User search failed due to invalid token"),
-                    }
-                ).unwrap()))
-            .unwrap();
+                        msg: ("User search failed due to invalid token")
+                            .to_string(),
+                    })
+                    .unwrap(),
+                ))
+                .unwrap();
             return Ok(response);
         }
     };
 
     // find all user by email and an active state where state == 0
-    let get_query = format!("\
-        SELECT \
+    let get_query = format!(
+        "SELECT \
             users.id, \
             users.email, \
             users.password, \
@@ -244,13 +246,10 @@ pub async fn search_users(
             users.created_at \
         DESC \
         LIMIT 100",
-        user_email);
+        user_email
+    );
     let stmt = conn.prepare(&get_query).await.unwrap();
-    let mut query_result: Vec<data_row> = Vec::with_capacity(5);
-    if false {
-        println!("{}", query_result.len());
-    }
-    query_result = match conn.query(&stmt, &[]).await {
+    let query_result = match conn.query(&stmt, &[]).await {
         Ok(query_result) => query_result,
         Err(e) => {
             let err_msg = format!("{}", e);
@@ -276,37 +275,36 @@ pub async fn search_users(
         let role: String = row.try_get("role").unwrap();
         row_list.push(ApiResUserGet {
             user_id: id,
-            email: email,
+            email,
             state: user_state,
             verified: user_verified,
-            role: role,
-            msg: String::from(""),
+            role,
+            msg: "".to_string(),
         });
     }
-    if row_list.len() == 0 {
+    if row_list.is_empty() {
         let response = Response::builder()
             .status(400)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserSearch {
-                        users: Vec::new(),
-                        msg: format!("no users found"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserSearch {
+                    users: Vec::new(),
+                    msg: ("no users found").to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
-        return Ok(response);
-    }
-    else {
+        Ok(response)
+    } else {
         let response = Response::builder()
             .status(200)
             .body(Body::from(
-                serde_json::to_string(
-                    &ApiResUserSearch {
-                        users: row_list,
-                        msg: format!("success"),
-                    }
-                ).unwrap()))
+                serde_json::to_string(&ApiResUserSearch {
+                    users: row_list,
+                    msg: "success".to_string(),
+                })
+                .unwrap(),
+            ))
             .unwrap();
-        return Ok(response);
+        Ok(response)
     }
 }

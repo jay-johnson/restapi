@@ -25,15 +25,14 @@ pub struct TlsConfig {
 
 /// helper implementation method for debugging TlsConfig(s)
 impl TlsConfig {
-
     /// show
     ///
     /// helper function for debugging filesystem
     /// paths vs expected environment variables
     ///
-    pub fn show(&self) -> bool {
-        println!("\
-            enabled={} \
+    pub fn show(&self) {
+        println!(
+            "enabled={} \
             server_endpoint={} \
             cert={} \
             key={} \
@@ -42,15 +41,15 @@ impl TlsConfig {
             client_key={} \
             client_ca={} \
             mode={}",
-                self.enabled,
-                self.server_endpoint,
-                self.cert_path,
-                self.key_path,
-                self.ca_path,
-                self.client_cert_path,
-                self.client_key_path,
-                self.client_ca_path,
-                self.mode);
-        return true;
+            self.enabled,
+            self.server_endpoint,
+            self.cert_path,
+            self.key_path,
+            self.ca_path,
+            self.client_cert_path,
+            self.client_key_path,
+            self.client_ca_path,
+            self.mode
+        );
     }
 }

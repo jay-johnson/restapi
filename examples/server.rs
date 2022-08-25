@@ -1,13 +1,13 @@
-extern crate pretty_env_logger;
+extern crate chrono;
 extern crate log;
+extern crate pretty_env_logger;
+extern crate prometheus;
 extern crate serde;
 extern crate serde_json;
-extern crate chrono;
 extern crate uuid;
-extern crate prometheus;
 
-use restapi::core::core_config::CoreConfig;
 use restapi::core::core_config::build_core_config;
+use restapi::core::core_config::CoreConfig;
 use restapi::core::server::run_server::run_server;
 
 /// main
@@ -21,7 +21,6 @@ use restapi::core::server::run_server::run_server;
 ///
 #[tokio::main]
 async fn main() {
-
     pretty_env_logger::init_timed();
 
     let label = "server";
@@ -29,9 +28,11 @@ async fn main() {
     let core_config: CoreConfig = match build_core_config(&label).await {
         Ok(core_config) => core_config,
         Err(err_msg) => {
-            panic!("\
+            panic!(
+                "\
                 failed to build core config with err='{err_msg}' \
-                stopping");
+                stopping"
+            );
         }
     };
 
