@@ -641,7 +641,7 @@
 //!
 //! ## Helm Chart
 //!
-//! Please refer to the [Deploying the Rust Rest API helm chart into kubernetes guide](https://github.com/jay-johnson/restapi/blob/main/charts/rust-restapi/README.md) for deploying the example helm chart into a kubernetes cluster.
+//! Please refer to the [Deploying the Rust Rest API helm chart into kubernetes guide](https://github.com/jay-johnson/restapi/blob/main/charts) for deploying the example helm chart into a kubernetes cluster.
 //!
 //! ## Build Docs
 //!
