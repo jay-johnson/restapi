@@ -1,4 +1,4 @@
-FROM rust:1.59
+FROM rust:1.63
 
 RUN apt-get update \
     && echo "installing openssl dependencies for tls encryption" \
