@@ -20,7 +20,7 @@ function build_rust_restapi_artifact() {
         red "error - failed to build rust rest api derived image - stopping"
         exit 1
     fi
-    yellow "getting podman image id"
+    yellow "getting latest podman image id"
     vc="podman images | grep \"${IMAGE_NAME} \" | grep \"${cur_tag} \" | head -1 | awk '{print \$3}'"
     image_id=$(eval "${vc}")
     lt="$?"
