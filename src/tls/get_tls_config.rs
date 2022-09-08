@@ -73,13 +73,14 @@ pub async fn get_tls_config(
     server_address: &str,
     mode: &str,
 ) -> Result<tls_config::TlsConfig, String> {
-    let tls_dir = std::env::var(format!("{app_name}_TLS_DIR"))
+    let uppercase_app_name = app_name.to_uppercase();
+    let tls_dir = std::env::var(format!("{uppercase_app_name}_TLS_DIR"))
         .unwrap_or_else(|_| format!("./certs/tls/{app_name}"));
-    let tls_ca = std::env::var(format!("{app_name}_TLS_CA"))
+    let tls_ca = std::env::var(format!("{uppercase_app_name}_TLS_CA"))
         .unwrap_or_else(|_| format!("{tls_dir}/{app_name}-ca.pem"));
-    let tls_key = std::env::var(format!("{app_name}_TLS_KEY"))
+    let tls_key = std::env::var(format!("{uppercase_app_name}_TLS_KEY"))
         .unwrap_or_else(|_| format!("{tls_dir}/{app_name}.key"));
-    let tls_cert = std::env::var(format!("{app_name}_TLS_CERT"))
+    let tls_cert = std::env::var(format!("{uppercase_app_name}_TLS_CERT"))
         .unwrap_or_else(|_| format!("{tls_dir}/{app_name}.crt"));
 
     let mut tls_enabled = false;
@@ -99,7 +100,7 @@ pub async fn get_tls_config(
         let err_msg = format!(
             "{tracking_label} - \
             failed to find {}_TLS_CA={tls_ca}",
-            app_name.to_uppercase()
+            uppercase_app_name
         );
         error!("{err_msg}");
         tls_enabled = false;
@@ -109,7 +110,7 @@ pub async fn get_tls_config(
         let err_msg = format!(
             "{tracking_label} - \
             failed to find {}_TLS_KEY={tls_key}",
-            app_name.to_uppercase()
+            uppercase_app_name
         );
         error!("{err_msg}");
         tls_enabled = false;
@@ -119,7 +120,7 @@ pub async fn get_tls_config(
         let err_msg = format!(
             "{tracking_label} - \
             failed to find {}_TLS_CERT={tls_cert}",
-            app_name.to_uppercase()
+            uppercase_app_name
         );
         error!("{err_msg}");
         tls_enabled = false;

@@ -7,7 +7,7 @@ function red() { printf "\x1b[38;5;196m%s\e[0m " "${@}"; printf "\n"; }
 
 function build_rust_restapi_artifact_base() {
     yellow "building rust rest api base image"
-    time docker build -f ./base.Dockerfile --rm -t jayjohnson/rust-restapi-base:latest .
+    time podman build --no-cache -f ./base.Dockerfile --rm -t jayjohnson/rust-restapi-base:latest .
     var_last_status="$?"
     if [[ "${var_last_status}" -ne 0 ]]; then
         red "error - failed to build rust rest api base image - stopping"

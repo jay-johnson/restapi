@@ -637,6 +637,9 @@
 //! ```bash
 //! cur_tag=$(cat Cargo.toml | grep version | head -1 | sed -e 's/"//g' | awk '{print $NF}')
 //! podman push IMAGE_ID "docker://docker.io/jayjohnson/rust-restapi:${cur_tag}"
+//! podman push IMAGE_ID "docker://docker.io/jayjohnson/rust-restapi:latest"
+//! podman push "docker.io/jayjohnson/rust-restapi:${cur_tag}"
+//! podman push "docker.io/jayjohnson/rust-restapi:latest"
 //! ```
 //!
 //! ## Helm Chart
