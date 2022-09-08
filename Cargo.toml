@@ -1,7 +1,7 @@
 [package]
 name = "restapi"
 description = "A secure-by-default rest api stack implemented with hyper, tokio, bb8 and postgres with prometheus for monitoring. This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed. Includes a working user management and authentication backend written in postgresql with async S3 uploading for POST-ed data files."
-version = "1.1.6"
+version = "1.1.7"
 edition = "2021"
 license = "MIT"
 authors = [
