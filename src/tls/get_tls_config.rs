@@ -147,7 +147,7 @@ pub async fn get_tls_config(
             match rustls_pemfile::rsa_private_keys(&mut &*key_pem)
                 .map(|mut keys| keys.drain(..).map(PrivateKey).collect())
             {
-                Ok(rsa_key_data) => rsa_key_data,
+                Ok(key_data) => key_data,
                 Err(_) => {
                     panic!("get_tls_config - unsupported rsa tls key={tls_key}")
                 }
@@ -159,7 +159,7 @@ pub async fn get_tls_config(
             keys = match rustls_pemfile::pkcs8_private_keys(&mut &*key_pem)
                 .map(|mut keys| keys.drain(..).map(PrivateKey).collect())
             {
-                Ok(rsa_key_data) => rsa_key_data,
+                Ok(key_data) => key_data,
                 Err(_) => {
                     panic!(
                         "get_tls_config - unsupported pkcs8 tls key={tls_key}"
