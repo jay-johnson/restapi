@@ -137,41 +137,42 @@ pub async fn get_tls_config(
 
         if certs.is_empty() {
             panic!(
-                "get_tls_config - failed to find a valid tls cert={tls_cert}")
+                "get_tls_config - failed to find a valid tls cert={tls_cert}"
+            )
         }
 
         // try loading the tls key using rsa then as pkcs8 before stopping
         // https://docs.rs/rustls-pemfile/latest/rustls_pemfile/#functions
-        let mut keys: Vec<PrivateKey> = match rustls_pemfile::rsa_private_keys(&mut &*key_pem)
-            .map(|mut keys| keys.drain(..).map(PrivateKey).collect()) {
-                Ok(rsa_key_data) => {
-                    rsa_key_data
-                },
+        let mut keys: Vec<PrivateKey> =
+            match rustls_pemfile::rsa_private_keys(&mut &*key_pem)
+                .map(|mut keys| keys.drain(..).map(PrivateKey).collect())
+            {
+                Ok(rsa_key_data) => rsa_key_data,
                 Err(_) => {
-                    panic!(
-                        "get_tls_config - unsupported rsa tls key={tls_key}")
+                    panic!("get_tls_config - unsupported rsa tls key={tls_key}")
                 }
-        };
+            };
 
         // if rsa returns an empty vec, try as pkcs8
         if keys.is_empty() {
             trace!("trying to load tls key={tls_key} using pkcs8");
             keys = match rustls_pemfile::pkcs8_private_keys(&mut &*key_pem)
-                .map(|mut keys| keys.drain(..).map(PrivateKey).collect()) {
-                    Ok(rsa_key_data) => {
-                        rsa_key_data
-                    },
-                    Err(_) => {
-                        panic!(
-                            "get_tls_config - unsupported pkcs8 tls key={tls_key}")
-                    }
+                .map(|mut keys| keys.drain(..).map(PrivateKey).collect())
+            {
+                Ok(rsa_key_data) => rsa_key_data,
+                Err(_) => {
+                    panic!(
+                        "get_tls_config - unsupported pkcs8 tls key={tls_key}"
+                    )
+                }
             };
         }
 
         if keys.is_empty() {
             panic!(
                 "get_tls_config - failed to find a valid tls key={tls_key} \
-                please use an rsa or pkcs8 key and retry")
+                please use an rsa or pkcs8 key and retry"
+            )
         }
 
         let mut server_config = ServerConfig::builder()
