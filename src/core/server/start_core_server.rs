@@ -96,7 +96,8 @@ pub async fn start_core_server(
                         )),
                     };
                     // 12
-                    if let Err(e) = http.serve_connection(stream, supported_services).await
+                    if let Err(e) =
+                        http.serve_connection(stream, supported_services).await
                     {
                         let err_msg = format!("{e}");
                         if !err_msg.contains("connection error: not connected")
