@@ -6,7 +6,7 @@ use crate::tls::tls_info::TlsInfo;
 use crate::core::core_config::CoreConfig;
 use crate::core::server::connection_handler::ConnectionHandler;
 
-/// core_server
+/// start_core_server
 ///
 /// Contains the server thread loop that starts everything
 ///
@@ -38,7 +38,7 @@ use crate::core::server::connection_handler::ConnectionHandler;
 ///
 /// * `config` - [`CoreConfig`](crate::core::core_config::CoreConfig) for static values
 ///
-pub async fn core_server(
+pub async fn start_core_server(
     config: &CoreConfig,
 ) -> std::result::Result<String, hyper::Error> {
     // 1

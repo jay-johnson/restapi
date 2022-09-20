@@ -1,10 +1,10 @@
 use crate::core::core_config::CoreConfig;
-use crate::core::server::core_server::core_server;
+use crate::core::server::start_core_server::start_core_server;
 
 /// run_server
 ///
 /// v1 (current version) - Wrapper around
-///    [`core_server`](crate::core::server::core_server::core_server)
+///    [`start_core_server`](crate::core::server::start_core_server::start_core_server)
 ///
 /// v2 - State machine in a `loop` for flushing
 ///      caches and connectivity (postgres client db threadpool)
@@ -15,15 +15,15 @@ use crate::core::server::core_server::core_server;
 ///
 pub async fn run_server(config: &CoreConfig) -> bool {
     // boot up the server
-    match core_server(config).await {
+    match start_core_server(config).await {
         Ok(_) => {
-            info!("{} - run_server.core_server done", config.label);
+            info!("{} - run_server.start_core_server done", config.label);
             true
         }
         Err(hyper_error) => {
             let err_msg = format!("{hyper_error}");
             panic!(
-                "{} - run_server.core_server failed with \
+                "{} - run_server.start_core_server failed with \
                 err='{err_msg}'",
                 config.label
             );
