@@ -10,7 +10,7 @@ use hyper::Response;
 use crate::core::core_config::CoreConfig;
 use crate::tls::tls_info::TlsInfo;
 
-/// CoreTaskItem
+/// CoreHttpRequest
 ///
 /// Wrapper for building an internal object that owns both
 /// a hyper [`Request`](hyper::Request) and a
@@ -25,7 +25,7 @@ use crate::tls::tls_info::TlsInfo;
 ///
 /// Everything a growing request needs!
 ///
-pub struct CoreTaskItem {
+pub struct CoreHttpRequest {
     pub config: CoreConfig,
     pub db_pool: Pool<PostgresConnectionManager<MakeTlsConnector>>,
     pub local_addr: std::net::SocketAddr,

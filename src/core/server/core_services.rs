@@ -15,12 +15,12 @@ use hyper::Request;
 use hyper::Response;
 
 use crate::core::core_config::CoreConfig;
-use crate::core::server::core_task_item::CoreTaskItem;
+use crate::core::server::core_http_request::CoreHttpRequest;
 use crate::handle_request::handle_request;
 
 use crate::tls::tls_info::TlsInfo;
 
-/// ConnectionHandler
+/// CoreServices
 ///
 /// A date type containing the
 /// hyper [`Request`](hyper::Request)
@@ -54,7 +54,7 @@ use crate::tls::tls_info::TlsInfo;
 /// (this is not optional with the default configuration).
 ///
 #[derive(Clone)]
-pub struct ConnectionHandler {
+pub struct CoreServices {
     pub config: CoreConfig,
     pub db_pool: Pool<PostgresConnectionManager<MakeTlsConnector>>,
     pub local_addr: std::net::SocketAddr,
@@ -64,7 +64,7 @@ pub struct ConnectionHandler {
 
 // Trait for hyper [`Service`](hyper::service::Service)
 // <https://docs.rs/hyper/latest/hyper/service/trait.Service.html#>
-impl Service<Request<Body>> for ConnectionHandler {
+impl Service<Request<Body>> for CoreServices {
     type Response = Response<Body>;
     type Error = Infallible;
     type Future = Pin<
@@ -96,9 +96,9 @@ impl Service<Request<Body>> for ConnectionHandler {
     ///
     /// Wrap a received hyper [`Request`](hyper::Request) from
     /// the api server in a
-    /// [`CoreTaskItem`](crate::core::server::core_task_item::CoreTaskItem)
+    /// [`CoreHttpRequest`](crate::core::server::core_http_request::CoreHttpRequest)
     /// object and consume the
-    /// [`CoreTaskItem`](crate::core::server::core_task_item::CoreTaskItem)
+    /// [`CoreHttpRequest`](crate::core::server::core_http_request::CoreHttpRequest)
     /// with the
     /// [`handle_request`](crate::handle_request::handle_request)
     /// function
@@ -114,7 +114,7 @@ impl Service<Request<Body>> for ConnectionHandler {
     fn call(&mut self, req: Request<Body>) -> Self::Future {
         // build a task item containing everything
         // a request needs
-        let data = CoreTaskItem {
+        let data = CoreHttpRequest {
             config: self.config.clone(),
             db_pool: self.db_pool.clone(),
             local_addr: self.local_addr,

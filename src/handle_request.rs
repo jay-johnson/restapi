@@ -15,7 +15,7 @@ use crate::monitoring::metrics::record_monitoring_metrics_api_after;
 use crate::monitoring::metrics::record_monitoring_metrics_api_before;
 // metrics - end
 
-use crate::core::server::core_task_item::CoreTaskItem;
+use crate::core::server::core_http_request::CoreHttpRequest;
 
 // request utils
 use crate::utils::get_server_address::get_server_address;
@@ -44,10 +44,10 @@ use crate::requests::user::verify_user::verify_user;
 ///
 /// # Arguments
 ///
-/// * `data` - [`CoreTaskItem`](crate::core::server::core_task_item::CoreTaskItem)
+/// * `data` - [`CoreHttpRequest`](crate::core::server::core_http_request::CoreHttpRequest)
 ///
 pub async fn handle_request(
-    data: CoreTaskItem,
+    data: CoreHttpRequest,
 ) -> std::result::Result<Response<Body>, Infallible> {
     /*
     let tracking_label = format!(

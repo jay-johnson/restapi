@@ -4,7 +4,7 @@ use crate::pools::get_db_pool::get_db_pool;
 use crate::tls::tls_info::TlsInfo;
 
 use crate::core::core_config::CoreConfig;
-use crate::core::server::connection_handler::ConnectionHandler;
+use crate::core::server::core_services::CoreServices;
 
 /// start_core_server
 ///
@@ -26,7 +26,7 @@ use crate::core::server::connection_handler::ConnectionHandler;
 /// 9. Determine if the client connection meets the tls requirements
 /// 10. Extract client tls connection information
 /// 11. Build a
-///     [`ConnectionHandler`](crate::core::server::connection_handler::ConnectionHandler)
+///     [`CoreServices`](crate::core::server::core_services::CoreServices)
 ///     to wrap the [`CoreConfig`](crate::core::core_config::CoreConfig),
 ///     `bb8 threadpool for postrgres`, socket information (local and remote),
 ///     and tls client information
@@ -85,7 +85,7 @@ pub async fn start_core_server(
                     let (_io, tls_connection) = stream.get_ref();
 
                     // 11
-                    let handler = ConnectionHandler {
+                    let supported_services = CoreServices {
                         config: cloned_config,
                         db_pool: cloned_pool,
                         local_addr,
@@ -96,7 +96,7 @@ pub async fn start_core_server(
                         )),
                     };
                     // 12
-                    if let Err(e) = http.serve_connection(stream, handler).await
+                    if let Err(e) = http.serve_connection(stream, supported_services).await
                     {
                         let err_msg = format!("{e}");
                         if !err_msg.contains("connection error: not connected")
