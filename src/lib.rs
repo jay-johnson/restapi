@@ -1,8 +1,6 @@
-//! # Rust Rest API Stack with User Management, async Kafka Publishing and Prometheus for Monitoring
+//! # Rust Rest API Stack with User Management, Kafka Message Publishing and Prometheus for Monitoring
 //!
-//! A secure-by-default rest api stack implemented with hyper, tokio, bb8, kafka_threadpool and postgres with prometheus for monitoring. This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed. Includes a working user management and authentication backend written in postgresql with async S3 uploading for POST-ed data files, and async publishing to an environment variable-configured kafka cluster.
-//!
-//! A secure-by-default rest api stack implemented with hyper, tokio, bb8 and postgres with prometheus for monitoring. This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed. Includes a working user management and authentication backend written in postgresql with async S3 uploading for POST-ed data files.
+//! A secure-by-default, async Rest API implemented with hyper, tokio, bb8, kafka_threadpool and postgres with prometheus for monitoring. Includes: a working user management and authentication backend written for postgres, async s3 uploading for POST-ed data files (or from memory), async s3 downloading (to a local file or into memory), async publishing to a kafka cluster with client mtls authentication and encryption in transit, native support for publishing all successful user events to kafka, and one-off message publishing to a custom kafka topic.
 //!
 //! # Examples
 //!
@@ -229,6 +227,8 @@
 //! ## Kubernetes
 //!
 //! ### Helm Chart
+//!
+//! Please refer to the [Deploying the Rust Rest API helm chart into kubernetes guide](https://github.com/jay-johnson/restapi/blob/main/charts) for deploying the example helm chart into a kubernetes cluster.
 //!
 //! #### Deploy TLS Assets into Kubernetes
 //!

@@ -708,9 +708,9 @@ dependencies = [
 
 [[package]]
 name = "kafka-threadpool"
-version = "1.0.10"
+version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87d3a7f327ee0bb484901ddd188f617feb3214ff2ecdc342ae68cd50b504c970"
+checksum = "fa70ab2decc15b148cc2f27c818ec816db22e021dc00882b6241c2a6ecefd54f"
 dependencies = [
  "log",
  "pretty_env_logger",
@@ -1315,7 +1315,7 @@ dependencies = [
 
 [[package]]
 name = "restapi"
-version = "1.1.11"
+version = "1.1.12"
 dependencies = [
  "bb8",
  "bb8-postgres",
