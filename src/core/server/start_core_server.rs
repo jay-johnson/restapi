@@ -1,4 +1,14 @@
+//! Before the Rest API server can start serving HTTP requests
+//! it starts up all configured threadpools and creates
+//! tls encryption in transit objects. These are stored in
+//! the [`CoreServices`](crate::core::server::core_services::CoreServices) struct
+//! which is cloned and passed to
+//! each tokio-spawned worker thread when a new HTTP request is received
+//!
 use std::sync::Arc;
+
+use kafka_threadpool::kafka_publisher::KafkaPublisher;
+use kafka_threadpool::start_threadpool::start_threadpool;
 
 use crate::pools::get_db_pool::get_db_pool;
 use crate::tls::tls_info::TlsInfo;
@@ -12,37 +22,44 @@ use crate::core::server::core_services::CoreServices;
 ///
 /// # Tasks
 ///
-/// 1. Build the encrypted bb8 threadpool ([`Pool`](bb8::Pool))
-/// 2. Build the [`TcpListener`](tokio::net::TcpListener) and bind it to
+/// 1. Start threadpools based off the ``CoreConfig``
+///    - Build the encrypted bb8 threadpool ([`Pool`](bb8::Pool))
+///    - Build the encrypted kafka threadpool
+///      ([`KafkaPublisher`](kafka_threadpool::KafkaPublisher))
+/// 1. Build the [`TcpListener`](tokio::net::TcpListener) and bind it to
 ///    the api server address
-/// 3. Create the [`Http`](hyper::server::conn::Http) server with
+/// 1. Create the [`Http`](hyper::server::conn::Http) server with
 ///    a thread-safe `Arc` for the verifying client tls connections using
 ///    a [`TlsInfo`](crate::tls::tls_info::TlsInfo) object
-/// 4. Start the server `loop`
-/// 5. Wait for a client connection `accept` is triggered on the server socket
-/// 6. Clone all `Arc` objects to ensure thread-safety
-/// 7. Create task future
-/// 8. Start task future
-/// 9. Determine if the client connection meets the tls requirements
-/// 10. Extract client tls connection information
-/// 11. Build a
-///     [`CoreServices`](crate::core::server::core_services::CoreServices)
-///     to wrap the [`CoreConfig`](crate::core::core_config::CoreConfig),
-///     `bb8 threadpool for postrgres`, socket information (local and remote),
-///     and tls client information
-/// 12. Handle serving the client
-///     connection using the [`handle_request`](crate::handle_request::handle_request)
-///     function
+/// 1. Start the server `loop`
+/// 1. Wait for a client connection `accept` is triggered on the server socket
+/// 1. Clone all `Arc` objects to ensure thread-safety
+/// 1. Create task future
+/// 1. Start task future
+/// 1. Determine if the client connection meets the tls requirements
+/// 1. Extract client tls connection information
+/// 1. Build a
+///    [`CoreServices`](crate::core::server::core_services::CoreServices)
+///    to wrap the [`CoreConfig`](crate::core::core_config::CoreConfig),
+///    `bb8 threadpool for postrgres`, socket information (local and remote),
+///    and tls client information
+/// 1. Handle serving the client
+///    connection using the [`handle_request`](crate::handle_request::handle_request)
+///    function
 ///
 /// # Arguments
 ///
-/// * `config` - [`CoreConfig`](crate::core::core_config::CoreConfig) for static values
+/// * `config` -
+/// [`CoreConfig`](crate::core::core_config::CoreConfig)
+/// for static values read from environment variables
 ///
 pub async fn start_core_server(
     config: &CoreConfig,
 ) -> std::result::Result<String, hyper::Error> {
-    // 1
-    let pool = get_db_pool(config).await;
+    // 1 - start threadpools
+    let db_pool = get_db_pool(config).await;
+    let kafka_pool: KafkaPublisher =
+        start_threadpool(Some(&config.label)).await;
     // 2
     let listener = match tokio::net::TcpListener::bind(
         &config.api_config.socket_addr.unwrap(),
@@ -75,7 +92,8 @@ pub async fn start_core_server(
         let acceptor = acceptor.clone();
         let http = http.clone();
         let cloned_config = config.clone();
-        let cloned_pool = pool.clone();
+        let cloned_db_pool = db_pool.clone();
+        let cloned_kafka_pool = kafka_pool.clone();
         // 7
         let fut = async move {
             // 9 determine if the client connection meets the tls requirements
@@ -87,7 +105,8 @@ pub async fn start_core_server(
                     // 11
                     let supported_services = CoreServices {
                         config: cloned_config,
-                        db_pool: cloned_pool,
+                        db_pool: cloned_db_pool,
+                        kafka_pool: cloned_kafka_pool,
                         local_addr,
                         remote_addr,
                         // tls is required
@@ -104,7 +123,7 @@ pub async fn start_core_server(
                             && !err_msg
                                 .contains("connection error: connection reset")
                         {
-                            error!("hyper server hit an internal error: {e}");
+                            trace!("hyper server hit an internal error: {e}");
                         }
                     }
                 }

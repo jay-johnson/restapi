@@ -1,3 +1,5 @@
+//! Module for verifying a user by email
+//!
 use postgres_native_tls::MakeTlsConnector;
 
 use bb8::PooledConnection;

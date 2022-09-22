@@ -1,3 +1,8 @@
+//! Module for checking the environment variable:
+//! ``USER_EMAIL_VERIFICATION_ENABLED`` to detect
+//! if user email verification is enabled
+//!
+
 /// is_verification_enabled
 ///
 /// Helper function to determine if

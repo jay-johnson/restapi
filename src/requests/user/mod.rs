@@ -1,3 +1,5 @@
+//! Modules for managing all user activities and state
+//!
 pub mod consume_user_otp;
 pub mod create_otp;
 pub mod create_user;

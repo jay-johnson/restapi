@@ -1,8 +1,11 @@
-//! # Handle all Client Requests
+//! The ``handle_request()`` function serves
+//! all client HTTP requests from within a single
+//! hyper worker thread.
+//! Note: when enabled, the prometheus metrics
+//! are available at the endpoint:
+//! ``https://API_ENDPOINT/metrics``
+//! using an HTTP ``GET`` method.
 //!
-//! Prometheus scrapes metrics at the endpoint:
-//! ``https://API_ENDPOINT/metrics`` with a ``GET`` method.
-
 use std::convert::Infallible;
 
 use hyper::body;
@@ -13,11 +16,9 @@ use hyper::Response;
 use crate::monitoring::metrics::handle_showing_metrics;
 use crate::monitoring::metrics::record_monitoring_metrics_api_after;
 use crate::monitoring::metrics::record_monitoring_metrics_api_before;
-// metrics - end
 
 use crate::core::server::core_http_request::CoreHttpRequest;
 
-// request utils
 use crate::utils::get_server_address::get_server_address;
 
 // request handlers
@@ -111,6 +112,7 @@ pub async fn handle_request(
                 &tracking_label,
                 &data.config,
                 &data.db_pool,
+                &data.kafka_pool,
                 &bytes,
             )
             .await;
@@ -132,6 +134,7 @@ pub async fn handle_request(
                 &tracking_label,
                 &data.config,
                 &data.db_pool,
+                &data.kafka_pool,
                 &parts.headers,
                 &bytes,
             )
@@ -151,6 +154,7 @@ pub async fn handle_request(
                 &tracking_label,
                 &data.config,
                 &data.db_pool,
+                &data.kafka_pool,
                 &parts.headers,
                 &bytes,
             )
@@ -170,6 +174,7 @@ pub async fn handle_request(
                 &tracking_label,
                 &data.config,
                 &data.db_pool,
+                &data.kafka_pool,
                 &parts.headers,
                 &bytes,
             )
@@ -191,6 +196,7 @@ pub async fn handle_request(
                 &tracking_label,
                 &data.config,
                 &data.db_pool,
+                &data.kafka_pool,
                 &parts.headers,
                 body,
             )
@@ -210,6 +216,7 @@ pub async fn handle_request(
                 &tracking_label,
                 &data.config,
                 &data.db_pool,
+                &data.kafka_pool,
                 &parts.headers,
                 &bytes,
             )
@@ -229,6 +236,7 @@ pub async fn handle_request(
                 &tracking_label,
                 &data.config,
                 &data.db_pool,
+                &data.kafka_pool,
                 &parts.headers,
                 &bytes,
             )
@@ -252,6 +260,7 @@ pub async fn handle_request(
                 &tracking_label,
                 &data.config,
                 &data.db_pool,
+                &data.kafka_pool,
                 &parts.headers,
                 &bytes,
             )
@@ -275,6 +284,7 @@ pub async fn handle_request(
                 &tracking_label,
                 &data.config,
                 &data.db_pool,
+                &data.kafka_pool,
                 &parts.headers,
                 &bytes,
             )
@@ -294,6 +304,7 @@ pub async fn handle_request(
                 &tracking_label,
                 &data.config,
                 &data.db_pool,
+                &data.kafka_pool,
                 &bytes,
             )
             .await;
@@ -331,6 +342,7 @@ pub async fn handle_request(
                     &tracking_label,
                     &data.config,
                     &data.db_pool,
+                    &data.kafka_pool,
                     &full_url,
                 )
                 .await;
@@ -354,6 +366,7 @@ pub async fn handle_request(
                     &tracking_label,
                     &data.config,
                     &data.db_pool,
+                    &data.kafka_pool,
                     &parts.headers,
                     request_uri,
                 )

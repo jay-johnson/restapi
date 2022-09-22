@@ -29,8 +29,7 @@ async fn main() {
         Ok(core_config) => core_config,
         Err(err_msg) => {
             panic!(
-                "\
-                failed to build core config with err='{err_msg}' \
+                "failed to build core config with err='{err_msg}' \
                 stopping"
             );
         }

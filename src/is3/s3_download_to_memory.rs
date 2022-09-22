@@ -1,3 +1,7 @@
+//! Download a file from s3 and store the contents
+//! in a buffer (``Vec<u8``) with the
+//! ``s3_download_to_memory()`` function
+//!
 use rusoto_core::Region;
 use rusoto_s3::GetObjectRequest;
 use rusoto_s3::S3Client;

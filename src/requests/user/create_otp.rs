@@ -1,3 +1,5 @@
+//! Module for creating a user's one-time-use password
+//!
 //! ## Create One-Time-Use Password Reset Token (OTP)
 //!
 //! Create a one-time-use password reset token that allows a user to change their ``users.password`` value by presenting the token
@@ -24,11 +26,13 @@ use hyper::Response;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::core::core_config::CoreConfig;
-use crate::utils::get_uuid::get_uuid;
+use kafka_threadpool::kafka_publisher::KafkaPublisher;
 
+use crate::core::core_config::CoreConfig;
+use crate::kafka::publish_msg::publish_msg;
 use crate::requests::auth::validate_user_token::validate_user_token;
 use crate::requests::models::user::get_user_by_id;
+use crate::utils::get_uuid::get_uuid;
 
 /// ApiReqUserCreateOtp
 ///
@@ -110,6 +114,9 @@ pub struct ApiResUserCreateOtp {
 /// * `config` - [`CoreConfig`](crate::core::core_config::CoreConfig)
 /// * `db_pool` - [`Pool`](bb8::Pool) - postgres client
 ///   db threadpool with required tls encryption
+/// * `kafka_pool` -
+///   [`KafkaPublisher`](kafka_threadpool::kafka_publisher::KafkaPublisher)
+///   for asynchronously publishing messages to the connected kafka cluster
 /// * `headers` - [`HeaderMap`](hyper::HeaderMap) -
 ///   hashmap containing headers in key-value pairs
 ///   [`Request`](hyper::Request)'s [`Body`](hyper::Body)
@@ -144,6 +151,7 @@ pub async fn create_otp(
     tracking_label: &str,
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
+    kafka_pool: &KafkaPublisher,
     headers: &HeaderMap<HeaderValue>,
     bytes: &[u8],
 ) -> std::result::Result<Response<Body>, Infallible> {
@@ -360,6 +368,23 @@ pub async fn create_otp(
             }
             Err(_) => "".to_string(),
         };
+
+        // if enabled, publish to kafka
+        if config.kafka_publish_events {
+            publish_msg(
+                kafka_pool,
+                // topic
+                "user.events",
+                // partition key
+                &format!("user-{}", user_id),
+                // optional headers stored in: Option<HashMap<String, String>>
+                None,
+                // payload in the message
+                &format!("USER_CREATE_OTP user={user_id}"),
+            )
+            .await;
+        }
+
         let response = Response::builder()
             .status(201)
             .body(Body::from(

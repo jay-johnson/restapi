@@ -1,3 +1,6 @@
+//! Module for verifying a user's email address
+//! in the postgres db
+//!
 //! ## Verify a User's email
 //!
 //! Consume a one-time-use verification token and change the user's ``users.verified`` value verified (``1``)
@@ -22,14 +25,14 @@ use hyper::Response;
 use serde::Deserialize;
 use serde::Serialize;
 
+use kafka_threadpool::kafka_publisher::KafkaPublisher;
+
 use crate::core::core_config::CoreConfig;
-
-use crate::utils::get_query_params_from_url::get_query_params_from_url;
-
+use crate::kafka::publish_msg::publish_msg;
 use crate::requests::models::user::get_user_by_id;
 use crate::requests::models::user_verify::get_user_verify_by_user_id;
-
 use crate::requests::user::is_verification_enabled::is_verification_enabled;
+use crate::utils::get_query_params_from_url::get_query_params_from_url;
 
 /// ApiReqUserVerify
 ///
@@ -126,6 +129,9 @@ pub struct ApiResUserVerify {
 ///   server statics and not used in request in this version
 /// * `db_pool` - [`Pool`](bb8::Pool) - postgres client
 ///   db threadpool with required tls encryption
+/// * `kafka_pool` -
+///   [`KafkaPublisher`](kafka_threadpool::kafka_publisher::KafkaPublisher)
+///   for asynchronously publishing messages to the connected kafka cluster
 /// * `headers` - [`HeaderMap`](hyper::HeaderMap) -
 ///   hashmap containing headers in key-value pairs
 ///   [`Request`](hyper::Request)'s [`Body`](hyper::Body)
@@ -166,8 +172,9 @@ pub struct ApiResUserVerify {
 ///
 pub async fn verify_user(
     tracking_label: &str,
-    _config: &CoreConfig,
+    config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
+    kafka_pool: &KafkaPublisher,
     full_url: &str,
 ) -> std::result::Result<Response<Body>, Infallible> {
     // get query params as a hashmap
@@ -598,6 +605,21 @@ pub async fn verify_user(
         let found_user_id: i32 = row.try_get("user_id").unwrap();
         let email: String = row.try_get("email").unwrap();
         let user_verify_state: i32 = row.try_get("state").unwrap();
+        // if enabled, publish to kafka
+        if config.kafka_publish_events {
+            publish_msg(
+                kafka_pool,
+                // topic
+                "user.events",
+                // partition key
+                &format!("user-{}", user_id),
+                // optional headers stored in: Option<HashMap<String, String>>
+                None,
+                // payload in the message
+                &format!("USER_VERIFY user={user_id} email={email}"),
+            )
+            .await;
+        }
         let response = Response::builder()
             .status(200)
             .body(Body::from(

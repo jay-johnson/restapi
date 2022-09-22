@@ -1,3 +1,5 @@
+//! Module for getting a user
+//!
 //! ## Get User
 //!
 //! Get a single user by ``users.id`` - by default, a user can only get their own account details
@@ -24,10 +26,11 @@ use hyper::Response;
 use serde::Deserialize;
 use serde::Serialize;
 
+use kafka_threadpool::kafka_publisher::KafkaPublisher;
+
 use crate::core::core_config::CoreConfig;
-
+use crate::kafka::publish_msg::publish_msg;
 use crate::requests::auth::validate_user_token::validate_user_token;
-
 use crate::requests::models::user::get_user_by_id;
 
 /// ApiReqUserGet
@@ -106,6 +109,9 @@ pub struct ApiResUserGet {
 /// * `config` - [`CoreConfig`](crate::core::core_config::CoreConfig)
 /// * `db_pool` - [`Pool`](bb8::Pool) - postgres client
 ///   db threadpool with required tls encryption
+/// * `kafka_pool` -
+///   [`KafkaPublisher`](kafka_threadpool::kafka_publisher::KafkaPublisher)
+///   for asynchronously publishing messages to the connected kafka cluster
 /// * `headers` - [`HeaderMap`](hyper::HeaderMap) -
 ///   hashmap containing headers in key-value pairs
 ///   [`Request`](hyper::Request)'s [`Body`](hyper::Body)
@@ -147,6 +153,7 @@ pub async fn get_user(
     tracking_label: &str,
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
+    kafka_pool: &KafkaPublisher,
     headers: &HeaderMap<HeaderValue>,
     request_uri: &str,
 ) -> std::result::Result<Response<Body>, Infallible> {
@@ -209,6 +216,22 @@ pub async fn get_user(
     // find all user by email and an active state where state == 0
     match get_user_by_id(tracking_label, user_id, &conn).await {
         Ok(user_model) => {
+            // if enabled, publish to kafka
+            if config.kafka_publish_events {
+                publish_msg(
+                    kafka_pool,
+                    // topic
+                    "user.events",
+                    // partition key
+                    &format!("user-{}", user_id),
+                    // optional headers stored in: Option<HashMap<String, String>>
+                    None,
+                    // payload in the message
+                    &format!("USER_CREATE user={user_id}"),
+                )
+                .await;
+            }
+
             let response = Response::builder()
                 .status(200)
                 .body(Body::from(

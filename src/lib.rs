@@ -1,4 +1,6 @@
-//! # Rust Rest API Stack with User Management
+//! # Rust Rest API Stack with User Management, async Kafka Publishing and Prometheus for Monitoring
+//!
+//! A secure-by-default rest api stack implemented with hyper, tokio, bb8, kafka_threadpool and postgres with prometheus for monitoring. This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed. Includes a working user management and authentication backend written in postgresql with async S3 uploading for POST-ed data files, and async publishing to an environment variable-configured kafka cluster.
 //!
 //! A secure-by-default rest api stack implemented with hyper, tokio, bb8 and postgres with prometheus for monitoring. This project is focused on providing end-to-end encryption by default for 12-factor applications looking to customize functionality using environment variables as needed. Includes a working user management and authentication backend written in postgresql with async S3 uploading for POST-ed data files.
 //!
@@ -91,7 +93,7 @@
 //! ### Run API Server
 //!
 //! ```bash
-//! export RUST_BACKTRACE=1 && export RUST_LOG=info && ./target/debug/examples/server
+//! export RUST_BACKTRACE=1 && export RUST_LOG=info,kafka_threadpool=info && ./target/debug/examples/server
 //! ```
 //!
 //! ## Environment Variables
@@ -135,6 +137,42 @@
 //! POSTGRES_TLS_CERT     | ./certs/tls/postgres/postgres.crt
 //! POSTGRES_TLS_KEY      | ./certs/tls/postgres/postgres.key
 //! POSTGRES_DB_CONN_TYPE | postgresql
+//!
+//! ### Kafka Cluster
+//!
+//! Please refer to the [kafka_threadpool docs](https://crates.io/crates/kafka-threadpool) for more information.
+//!
+//! Environment Variable             | Purpose / Value
+//! -------------------------------- | ---------------
+//! KAFKA_PUBLISH_EVENTS             | if set to ``true`` or ``1`` publish all user events to kafka
+//! KAFKA_ENABLED                    | toggle the kafka_threadpool on with: ``true`` or ``1`` anything else disables the threadpool
+//! KAFKA_LOG_LABEL                  | tracking label that shows up in all crate logs
+//! KAFKA_BROKERS                    | comma-delimited list of brokers (``host1:port,host2:port,host3:port``)
+//! KAFKA_TOPICS                     | comma-delimited list of supported topics
+//! KAFKA_PUBLISH_RETRY_INTERVAL_SEC | number of seconds to sleep before each publish retry
+//! KAFKA_PUBLISH_IDLE_INTERVAL_SEC  | number of seconds to sleep if there are no message to process
+//! KAFKA_NUM_THREADS                | number of threads for the threadpool
+//! KAFKA_TLS_CLIENT_KEY             | optional - path to the kafka mTLS key
+//! KAFKA_TLS_CLIENT_CERT            | optional - path to the kafka mTLS certificate
+//! KAFKA_TLS_CLIENT_CA              | optional - path to the kafka mTLS certificate authority (CA)
+//! KAFKA_METADATA_COUNT_MSG_OFFSETS | optional - set to anything but ``true`` to bypass counting the offsets
+//!
+//! #### Sample kafka.env file
+//!
+//! ```bash
+//! # enable the cluster
+//! export KAFKA_ENABLED=1
+//! export KAFKA_LOG_LABEL="ktp"
+//! export KAFKA_BROKERS="host1:port,host2:port,host3:port"
+//! export KAFKA_TOPICS="testing"
+//! export KAFKA_PUBLISH_RETRY_INTERVAL_SEC="1.0"
+//! export KAFKA_NUM_THREADS="5"
+//! export KAFKA_TLS_CLIENT_CA="PATH_TO_TLS_CA_FILE"
+//! export KAFKA_TLS_CLIENT_CERT="PATH_TO_TLS_CERT_FILE"
+//! export KAFKA_TLS_CLIENT_KEY="PATH_TO_TLS_KEY_FILE"
+//! # the KafkaPublisher can count the offsets for each topic with "true" or "1"
+//! export KAFKA_METADATA_COUNT_MSG_OFFSETS="true"
+//! ```
 //!
 //! ### S3
 //!
@@ -665,6 +703,7 @@ pub mod core;
 pub mod handle_request;
 pub mod is3;
 pub mod jwt;
+pub mod kafka;
 pub mod monitoring;
 pub mod pools;
 pub mod requests;

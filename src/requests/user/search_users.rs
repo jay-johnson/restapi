@@ -1,4 +1,6 @@
-//! ## Search Users in the db
+//! Module for searching for users in the postgres db
+//!
+//! ## Search Users in the Postgres DB
 //!
 //! Search for matching ``users`` records in the db
 //!
@@ -24,8 +26,10 @@ use hyper::Response;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::core::core_config::CoreConfig;
+use kafka_threadpool::kafka_publisher::KafkaPublisher;
 
+use crate::core::core_config::CoreConfig;
+use crate::kafka::publish_msg::publish_msg;
 use crate::requests::auth::validate_user_token::validate_user_token;
 use crate::requests::user::get_user::ApiResUserGet;
 
@@ -108,6 +112,9 @@ pub struct ApiResUserSearch {
 /// * `config` - [`CoreConfig`](crate::core::core_config::CoreConfig)
 /// * `db_pool` - [`Pool`](bb8::Pool) - postgres client
 ///   db threadpool with required tls encryption
+/// * `kafka_pool` -
+///   [`KafkaPublisher`](kafka_threadpool::kafka_publisher::KafkaPublisher)
+///   for asynchronously publishing messages to the connected kafka cluster
 /// * `headers` - [`HeaderMap`](hyper::HeaderMap) -
 ///   hashmap containing headers in key-value pairs
 ///   [`Request`](hyper::Request)'s [`Body`](hyper::Body)
@@ -146,6 +153,7 @@ pub async fn search_users(
     tracking_label: &str,
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
+    kafka_pool: &KafkaPublisher,
     headers: &HeaderMap<HeaderValue>,
     bytes: &[u8],
 ) -> std::result::Result<Response<Body>, Infallible> {
@@ -295,6 +303,21 @@ pub async fn search_users(
             .unwrap();
         Ok(response)
     } else {
+        // if enabled, publish to kafka
+        if config.kafka_publish_events {
+            publish_msg(
+                kafka_pool,
+                // topic
+                "user.events",
+                // partition key
+                &format!("user-{}", user_id),
+                // optional headers stored in: Option<HashMap<String, String>>
+                None,
+                // payload in the message
+                &format!("SEARCH_USERS user={user_id}"),
+            )
+            .await;
+        }
         let response = Response::builder()
             .status(200)
             .body(Body::from(

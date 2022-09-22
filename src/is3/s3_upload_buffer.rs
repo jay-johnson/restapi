@@ -1,3 +1,7 @@
+//! Upload a slice of bytes (``[u8]``) and store the contents
+//! in a single s3 key (file) using the function:
+//! ``s3_upload_buffer()``
+//!
 use std::sync::Arc;
 use std::sync::Mutex;
 

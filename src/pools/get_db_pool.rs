@@ -1,3 +1,6 @@
+//! The ``get_db_pool`` function will start up the
+//! bb8 postgres db threadpool based off environment variables
+//!
 use native_tls::Certificate as native_tls_cert;
 use native_tls::TlsConnector;
 use postgres_native_tls::MakeTlsConnector;

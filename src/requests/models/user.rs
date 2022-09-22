@@ -1,3 +1,5 @@
+//! Module for a user
+//!
 use postgres_native_tls::MakeTlsConnector;
 
 use bb8::PooledConnection;

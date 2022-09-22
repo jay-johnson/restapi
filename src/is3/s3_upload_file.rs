@@ -1,7 +1,11 @@
+//! Upload a local file to s3 using the function:
+//! ``s3_upload_file()``
+//!
 use std::io::Read;
 use std::sync::Arc;
 use std::sync::Mutex;
-// if tracing include this use:
+
+// if tracing performance include this:
 // use std::time::Instant;
 
 use rusoto_core::Region;

@@ -1,3 +1,6 @@
+//! Module for getting a uuid (without dash characters)
+//!
+
 /// get_uuid
 ///
 /// wrapper for building a unique id

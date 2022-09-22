@@ -1,3 +1,5 @@
+//! Module for asynchronously reading a local file into a ``Vec<u8>``
+//!
 use log::error;
 use log::info;
 use log::trace;

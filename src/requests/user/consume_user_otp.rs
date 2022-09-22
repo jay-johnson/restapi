@@ -1,3 +1,5 @@
+//! Module for consuming a user's one-time-use password
+//!
 //! ## Consume a One-Time-Use Password Reset Token (OTP)
 //!
 //! Consume a one-time-use password and change the user's ``users.password`` value to the new argon2-salted password
@@ -27,8 +29,10 @@ use serde::Serialize;
 use argon2::hash_encoded as argon_hash_encoded;
 use argon2::Config as argon_config;
 
-use crate::core::core_config::CoreConfig;
+use kafka_threadpool::kafka_publisher::KafkaPublisher;
 
+use crate::core::core_config::CoreConfig;
+use crate::kafka::publish_msg::publish_msg;
 use crate::requests::auth::validate_user_token::validate_user_token;
 use crate::requests::models::user::get_user_by_id;
 use crate::requests::models::user_otp::get_user_otp;
@@ -123,6 +127,9 @@ pub struct ApiResUserConsumeOtp {
 /// * `config` - [`CoreConfig`](crate::core::core_config::CoreConfig)
 /// * `db_pool` - [`Pool`](bb8::Pool) - postgres client
 ///   db threadpool with required tls encryption
+/// * `kafka_pool` -
+///   [`KafkaPublisher`](kafka_threadpool::kafka_publisher::KafkaPublisher)
+///   for asynchronously publishing messages to the connected kafka cluster
 /// * `headers` - [`HeaderMap`](hyper::HeaderMap) -
 ///   hashmap containing headers in key-value pairs
 ///   [`Request`](hyper::Request)'s [`Body`](hyper::Body)
@@ -162,6 +169,7 @@ pub async fn consume_user_otp(
     tracking_label: &str,
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
+    kafka_pool: &KafkaPublisher,
     headers: &HeaderMap<HeaderValue>,
     bytes: &[u8],
 ) -> std::result::Result<Response<Body>, Infallible> {
@@ -540,6 +548,23 @@ pub async fn consume_user_otp(
         };
 
         let user_otp_id: i32 = row.try_get("id").unwrap();
+
+        // if enabled, publish to kafka
+        if config.kafka_publish_events {
+            publish_msg(
+                kafka_pool,
+                // topic
+                "user.events",
+                // partition key
+                &format!("user-{}", user_id),
+                // optional headers stored in: Option<HashMap<String, String>>
+                None,
+                // payload in the message
+                &format!("USER_CONSUME_OTP user={user_id}"),
+            )
+            .await;
+        }
+
         let response = Response::builder()
             .status(200)
             .body(Body::from(

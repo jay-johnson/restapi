@@ -1,3 +1,5 @@
+//! Module for asynchronously writing a ``Vec<u8>`` to a local file
+//!
 use log::error;
 use log::info;
 use log::trace;

@@ -1,3 +1,6 @@
+//! Module containing the tls configuration struct and implementation
+//! (``TlsConfig``)
+//!
 use rustls::ServerConfig;
 
 /// TlsConfig

@@ -1,3 +1,6 @@
+//! Module for uploading a single file to s3 and store the path in
+//! the postgres db
+//!
 //! ## Upload a file asynchronously to AWS S3 and store a tracking record in the db
 //!
 //! Upload a local file on disk to AWS S3 asynchronously and store a tracking record in the ``users_data`` table. The documentation refers to this as a ``user data`` or ``user data file`` record.
@@ -25,13 +28,13 @@ use hyper::Response;
 use serde::Deserialize;
 use serde::Serialize;
 
+use kafka_threadpool::kafka_publisher::KafkaPublisher;
+
 use crate::core::core_config::CoreConfig;
-
-use crate::requests::auth::validate_user_token::validate_user_token;
-
-use crate::utils::get_uuid::get_uuid;
-
 use crate::is3::s3_upload_buffer::s3_upload_buffer;
+use crate::kafka::publish_msg::publish_msg;
+use crate::requests::auth::validate_user_token::validate_user_token;
+use crate::utils::get_uuid::get_uuid;
 
 /// ApiReqUserUploadData
 ///
@@ -147,6 +150,9 @@ pub struct ApiResUserUploadData {
 /// * `config` - [`CoreConfig`](crate::core::core_config::CoreConfig)
 /// * `db_pool` - [`Pool`](bb8::Pool) - postgres client
 ///   db threadpool with required tls encryption
+/// * `kafka_pool` -
+///   [`KafkaPublisher`](kafka_threadpool::kafka_publisher::KafkaPublisher)
+///   for asynchronously publishing messages to the connected kafka cluster
 /// * `headers` - [`HeaderMap`](hyper::HeaderMap) -
 ///   hashmap containing headers in key-value pairs
 ///   [`Request`](hyper::Request)'s [`Body`](hyper::Body)
@@ -188,6 +194,7 @@ pub async fn upload_user_data(
     tracking_label: &str,
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
+    kafka_pool: &KafkaPublisher,
     headers: &HeaderMap<HeaderValue>,
     body: hyper::Body,
 ) -> std::result::Result<Response<Body>, Infallible> {
@@ -519,6 +526,21 @@ pub async fn upload_user_data(
             .unwrap();
         Ok(response)
     } else {
+        // if enabled, publish to kafka
+        if config.kafka_publish_events {
+            publish_msg(
+                kafka_pool,
+                // topic
+                "user.events",
+                // partition key
+                &format!("user-{}", user_id),
+                // optional headers stored in: Option<HashMap<String, String>>
+                None,
+                // payload in the message
+                &format!("UPLOAD_USER_DATA user={user_id}"),
+            )
+            .await;
+        }
         let response = Response::builder()
             .status(200)
             .body(Body::from(serde_json::to_string(&row_list[0]).unwrap()))

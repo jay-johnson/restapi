@@ -1,3 +1,10 @@
+//! Static server configuration stored in the
+//! [`struct CoreConfig`](crate::core::core_config::CoreConfig)
+//! that contains all connectivity endpoints,
+//! tls asset paths, api tls configuration,
+//! jwt keys, user password salt, is kafka
+//! publishing enabled, and postgres db credentials
+//!
 use crate::tls::get_tls_config::get_tls_config;
 use crate::tls::tls_config::TlsConfig;
 
@@ -111,6 +118,7 @@ pub struct CoreConfig {
     pub db_config: TlsConfig,
     pub encoding_key_bytes: Vec<u8>,
     pub decoding_key_bytes: Vec<u8>,
+    pub kafka_publish_events: bool,
     // more shared Send/Sync objects can go here
 }
 
@@ -158,6 +166,13 @@ pub async fn build_core_config(label: &str) -> Result<CoreConfig, String> {
         .unwrap_or_else(|_| format!("{pki_dir_jwt}/private-key-pkcs8.pem"));
     let token_public_key_path = std::env::var("TOKEN_ALGO_PUBLIC_KEY")
         .unwrap_or_else(|_| format!("{pki_dir_jwt}/public-key.pem"));
+
+    let kafka_publish_events_s = std::env::var("KAFKA_PUBLISH_EVENTS")
+        .unwrap_or_else(|_| "false".to_string());
+    let mut kafka_publish_events = false;
+    if kafka_publish_events_s == "1" || kafka_publish_events_s == "true" {
+        kafka_publish_events = true;
+    }
 
     let token_private_key_bytes =
         std::fs::read_to_string(&token_private_key_path)
@@ -223,6 +238,7 @@ pub async fn build_core_config(label: &str) -> Result<CoreConfig, String> {
         db_config,
         encoding_key_bytes: token_private_key_bytes.clone(),
         decoding_key_bytes: token_public_key_bytes.clone(),
+        kafka_publish_events,
     };
 
     if std::env::var("DEBUG").unwrap_or_else(|_| "0".to_string()) == *"1" {

@@ -1,3 +1,5 @@
+//! Module for validating a user's JWT token
+//!
 use postgres_native_tls::MakeTlsConnector;
 
 use bb8::PooledConnection;
@@ -7,9 +9,7 @@ use hyper::header::HeaderValue;
 use hyper::HeaderMap;
 
 use crate::core::core_config::CoreConfig;
-
 use crate::jwt::api as jwt_api;
-
 use crate::requests::models::user::get_user_by_id;
 
 /// validate_user_token

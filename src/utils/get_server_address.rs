@@ -1,3 +1,7 @@
+//! Module for getting the HTTP server address and endpoint from
+//! environment variables
+//!
+
 /// get_server_address
 ///
 /// wrapper for getting the server address from

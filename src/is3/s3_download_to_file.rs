@@ -1,3 +1,6 @@
+//! Download a file from s3 using the
+//! ``s3_download_to_file()`` function
+//!
 use crate::is3::s3_download_to_memory::s3_download_to_memory;
 use std::fs;
 

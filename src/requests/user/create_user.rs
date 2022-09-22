@@ -1,3 +1,5 @@
+//! Module for creating a user
+//!
 //! ## Create User
 //!
 //! Create a single ``users`` record for the new user
@@ -25,15 +27,15 @@ use serde::Serialize;
 use argon2::hash_encoded as argon_hash_encoded;
 use argon2::Config as argon_config;
 
+use kafka_threadpool::kafka_publisher::KafkaPublisher;
+
 use crate::core::core_config::CoreConfig;
-
-use crate::utils::get_server_address::get_server_address;
-
+use crate::kafka::publish_msg::publish_msg;
 use crate::requests::auth::create_user_token::create_user_token;
 use crate::requests::auth::login_user::ApiResUserLogin;
-
 use crate::requests::user::is_verification_enabled::is_verification_enabled;
 use crate::requests::user::upsert_user_verification::upsert_user_verification;
+use crate::utils::get_server_address::get_server_address;
 
 /// ApiReqUserCreate
 ///
@@ -114,6 +116,9 @@ pub struct ApiResUserCreate {
 /// * `config` - [`CoreConfig`](crate::core::core_config::CoreConfig)
 /// * `db_pool` - [`Pool`](bb8::Pool) - postgres client
 ///   db threadpool with required tls encryption
+/// * `kafka_pool` -
+///   [`KafkaPublisher`](kafka_threadpool::kafka_publisher::KafkaPublisher)
+///   for asynchronously publishing messages to the connected kafka cluster
 /// * `bytes` - `&[u8]` - received bytes from the hyper
 ///   [`Request`](hyper::Request)'s [`Body`](hyper::Body)
 ///
@@ -152,6 +157,7 @@ pub async fn create_user(
     tracking_label: &str,
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
+    kafka_pool: &KafkaPublisher,
     bytes: &[u8],
 ) -> std::result::Result<Response<Body>, Infallible> {
     let user_object: ApiReqUserCreate = serde_json::from_slice(bytes).unwrap();
@@ -376,6 +382,23 @@ pub async fn create_user(
                 }
             };
         }
+
+        // if enabled, publish to kafka
+        if config.kafka_publish_events {
+            publish_msg(
+                kafka_pool,
+                // topic
+                "user.events",
+                // partition key
+                &format!("user-{}", user_id),
+                // optional headers stored in: Option<HashMap<String, String>>
+                None,
+                // payload in the message
+                &format!("USER_CREATE user={user_id} email={user_email}"),
+            )
+            .await;
+        }
+
         let response = Response::builder()
             .status(201)
             .body(Body::from(

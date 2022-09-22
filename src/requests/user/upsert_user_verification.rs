@@ -1,3 +1,6 @@
+//! Module for upsert-ing a user's email verification record
+//! in the postgres db
+//!
 use postgres_native_tls::MakeTlsConnector;
 
 use bb8::PooledConnection;
@@ -7,7 +10,6 @@ use chrono::Duration;
 use chrono::Utc;
 
 use crate::requests::user::is_verification_enabled::is_verification_enabled;
-
 use crate::utils::get_uuid::get_uuid;
 
 /// upsert_user_verification

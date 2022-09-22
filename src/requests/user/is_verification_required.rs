@@ -1,3 +1,9 @@
+//! Module for checking the environment variable:
+//! ``USER_EMAIL_VERIFICATION_REQUIRED`` to detect
+//! if user email verification is required for
+//! a user's login
+//!
+
 /// is_verification_required
 ///
 /// Helper for determining if user

@@ -1,3 +1,5 @@
+//! Module for handing user login
+//!
 //! ## User Login
 //!
 //! Log the user in and get a json web token (jwt) back for authentication on subsequent client requests
@@ -25,10 +27,11 @@ use serde::Serialize;
 use argon2::hash_encoded as argon_hash_encoded;
 use argon2::Config as argon_config;
 
+use kafka_threadpool::kafka_publisher::KafkaPublisher;
+
 use crate::core::core_config::CoreConfig;
-
+use crate::kafka::publish_msg::publish_msg;
 use crate::requests::auth::create_user_token::create_user_token;
-
 use crate::requests::user::is_verification_required::is_verification_required;
 
 /// ApiReqUserLogin
@@ -115,6 +118,9 @@ pub struct ApiResUserLogin {
 /// * `config` - [`CoreConfig`](crate::core::core_config::CoreConfig)
 /// * `db_pool` - [`Pool`](bb8::Pool) - postgres client
 ///   db threadpool with required tls encryption
+/// * `kafka_pool` -
+///   [`KafkaPublisher`](kafka_threadpool::kafka_publisher::KafkaPublisher)
+///   for asynchronously publishing messages to the connected kafka cluster
 /// * `bytes` - `&[u8]` - bytes received from the hyper server
 ///
 /// # Returns
@@ -144,6 +150,7 @@ pub async fn login_user(
     tracking_label: &str,
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
+    kafka_pool: &KafkaPublisher,
     bytes: &[u8],
 ) -> std::result::Result<Response<Body>, Infallible> {
     // deserialize into a type
@@ -334,6 +341,23 @@ pub async fn login_user(
                 return Ok(response);
             }
         };
+
+        // if enabled, publish to kafka
+        if config.kafka_publish_events {
+            publish_msg(
+                kafka_pool,
+                // topic
+                "user.events",
+                // partition key
+                &format!("user-{}", user_id),
+                // optional headers stored in: Option<HashMap<String, String>>
+                None,
+                // payload in the message
+                &format!("LOGIN user={user_id} email={user_email}"),
+            )
+            .await;
+        }
+
         let response = Response::builder()
             .status(201)
             .body(Body::from(

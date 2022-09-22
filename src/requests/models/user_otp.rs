@@ -1,3 +1,5 @@
+//! Module for a user's one-time-use password
+//!
 use postgres_native_tls::MakeTlsConnector;
 
 use bb8::PooledConnection;

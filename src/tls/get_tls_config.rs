@@ -1,8 +1,11 @@
+//! Module for building the tls configuration (``TlsConfig``) from
+//! environment variables
+//!
 use rustls::Certificate;
 use rustls::PrivateKey;
 use rustls::ServerConfig;
 
-use crate::tls::tls_config;
+use crate::tls::tls_config::TlsConfig;
 
 /// get_tls_config
 ///
@@ -72,7 +75,7 @@ pub async fn get_tls_config(
     app_name: &str,
     server_address: &str,
     mode: &str,
-) -> Result<tls_config::TlsConfig, String> {
+) -> Result<TlsConfig, String> {
     let uppercase_app_name = app_name.to_uppercase();
     let tls_dir = std::env::var(format!("{uppercase_app_name}_TLS_DIR"))
         .unwrap_or_else(|_| format!("./certs/tls/{app_name}"));
@@ -187,7 +190,7 @@ pub async fn get_tls_config(
         server_config
     };
 
-    Ok(tls_config::TlsConfig {
+    Ok(TlsConfig {
         enabled: tls_enabled,
         cert_path: tls_cert,
         key_path: tls_key,

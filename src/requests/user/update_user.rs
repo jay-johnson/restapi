@@ -1,3 +1,5 @@
+//! Module for updating a user's fields in the postgres db
+//!
 //! ## Update User
 //!
 //! Update supported ``users`` fields (including change user email and password)
@@ -27,17 +29,16 @@ use serde::Serialize;
 use argon2::hash_encoded as argon_hash_encoded;
 use argon2::Config as argon_config;
 
+use kafka_threadpool::kafka_publisher::KafkaPublisher;
+
 use crate::core::core_config::CoreConfig;
-
-use crate::utils::get_server_address::get_server_address;
-
+use crate::kafka::publish_msg::publish_msg;
 use crate::requests::auth::validate_user_token::validate_user_token;
-
 use crate::requests::models::user::get_user_by_id;
 use crate::requests::models::user::ModelUser;
-
 use crate::requests::user::is_verification_enabled::is_verification_enabled;
 use crate::requests::user::upsert_user_verification::upsert_user_verification;
+use crate::utils::get_server_address::get_server_address;
 
 /// ApiReqUserUpdate
 ///
@@ -239,6 +240,9 @@ pub struct ApiResUserUpdate {
 /// * `config` - [`CoreConfig`](crate::core::core_config::CoreConfig)
 /// * `db_pool` - [`Pool`](bb8::Pool) - postgres client
 ///   db threadpool with required tls encryption
+/// * `kafka_pool` -
+///   [`KafkaPublisher`](kafka_threadpool::kafka_publisher::KafkaPublisher)
+///   for asynchronously publishing messages to the connected kafka cluster
 /// * `headers` - [`HeaderMap`](hyper::HeaderMap) -
 ///   hashmap containing headers in key-value pairs
 ///   [`Request`](hyper::Request)'s [`Body`](hyper::Body)
@@ -278,6 +282,7 @@ pub async fn update_user(
     tracking_label: &str,
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
+    kafka_pool: &KafkaPublisher,
     headers: &HeaderMap<HeaderValue>,
     bytes: &[u8],
 ) -> std::result::Result<Response<Body>, Infallible> {
@@ -544,6 +549,21 @@ pub async fn update_user(
                     );
                 }
             }
+        }
+        // if enabled, publish to kafka
+        if config.kafka_publish_events {
+            publish_msg(
+                kafka_pool,
+                // topic
+                "user.events",
+                // partition key
+                &format!("user-{}", user_id),
+                // optional headers stored in: Option<HashMap<String, String>>
+                None,
+                // payload in the message
+                &format!("USER_UPDATE user={user_id} email={user_email}"),
+            )
+            .await;
         }
         let response = Response::builder()
             .status(200)

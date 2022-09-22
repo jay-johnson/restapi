@@ -1,4 +1,4 @@
-//! # Monitoring a Hyper Server with Prometheus
+//! Monitor the hyper server with custom prometheus metrics
 //!
 use std::convert::Infallible;
 

@@ -1,3 +1,5 @@
+//! Model for a user's single uploaded s3 key
+//!
 use serde::Deserialize;
 use serde::Serialize;
 

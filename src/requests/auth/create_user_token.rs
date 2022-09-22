@@ -1,3 +1,5 @@
+//! Create a user's JWT token
+//!
 use postgres_native_tls::MakeTlsConnector;
 
 use bb8::PooledConnection;

@@ -1,3 +1,5 @@
+//! Module for deleting a user
+//!
 //! ## Delete User
 //!
 //! Delete a single ``users`` record (note: this does not delete the db record, just sets the ``users.state`` to inactive ``1``)
@@ -24,8 +26,10 @@ use hyper::Response;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::core::core_config::CoreConfig;
+use kafka_threadpool::kafka_publisher::KafkaPublisher;
 
+use crate::core::core_config::CoreConfig;
+use crate::kafka::publish_msg::publish_msg;
 use crate::requests::auth::validate_user_token::validate_user_token;
 
 /// ApiReqUserDelete
@@ -122,6 +126,9 @@ pub struct ApiResUserDelete {
 /// * `config` - [`CoreConfig`](crate::core::core_config::CoreConfig)
 /// * `db_pool` - [`Pool`](bb8::Pool) - postgres client
 ///   db threadpool with required tls encryption
+/// * `kafka_pool` -
+///   [`KafkaPublisher`](kafka_threadpool::kafka_publisher::KafkaPublisher)
+///   for asynchronously publishing messages to the connected kafka cluster
 /// * `headers` - [`HeaderMap`](hyper::HeaderMap) -
 ///   hashmap containing headers in key-value pairs
 ///   [`Request`](hyper::Request)'s [`Body`](hyper::Body)
@@ -158,6 +165,7 @@ pub async fn delete_user(
     tracking_label: &str,
     config: &CoreConfig,
     db_pool: &Pool<PostgresConnectionManager<MakeTlsConnector>>,
+    kafka_pool: &KafkaPublisher,
     headers: &HeaderMap<HeaderValue>,
     bytes: &[u8],
 ) -> std::result::Result<Response<Body>, Infallible> {
@@ -285,6 +293,22 @@ pub async fn delete_user(
             .unwrap();
         Ok(response)
     } else {
+        // if enabled, publish to kafka
+        if config.kafka_publish_events {
+            publish_msg(
+                kafka_pool,
+                // topic
+                "user.events",
+                // partition key
+                &format!("user-{}", user_object.user_id),
+                // optional headers stored in: Option<HashMap<String, String>>
+                None,
+                // payload in the message
+                &format!("USER_DELETE user={}", user_object.user_id),
+            )
+            .await;
+        }
+
         let response = Response::builder()
             .status(204)
             .body(Body::from(

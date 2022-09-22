@@ -1,3 +1,6 @@
+//! Module containing the tls information struct and implementation
+//! (``TlsInfo``) for the hyper serve to enable encryption in transit
+//!
 use rustls::ProtocolVersion;
 use rustls::ServerConnection;
 use rustls::SupportedCipherSuite;

@@ -1,3 +1,6 @@
+//! Module for getting url query params and storing them in a:
+//! ``HashMap<String, String>``
+//!
 use std::collections::HashMap;
 
 use url::Url;

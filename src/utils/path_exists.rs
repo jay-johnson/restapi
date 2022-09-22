@@ -1,3 +1,5 @@
+//! Module testing if a local file exists
+//!
 use std::fs;
 
 /// path_exists
