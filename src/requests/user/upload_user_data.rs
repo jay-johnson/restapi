@@ -1,9 +1,11 @@
-//! Module for uploading a single file to s3 and store the path in
+//! Module for uploading a POST-ed file to s3 and store the tracking data in
 //! the postgres db
 //!
 //! ## Upload a file asynchronously to AWS S3 and store a tracking record in the db
 //!
-//! Upload a local file on disk to AWS S3 asynchronously and store a tracking record in the ``users_data`` table. The documentation refers to this as a ``user data`` or ``user data file`` record.
+//! Upload a local file on disk to AWS S3 asynchronously and store a
+//! tracking record in the ``users_data`` table. The documentation
+//! refers to this as a ``user data`` or ``user data file`` record.
 //!
 //! - URL path: ``/user/data``
 //! - Method: ``POST``
