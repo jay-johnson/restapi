@@ -1,4 +1,4 @@
-//! Module for validating a user's JWT token
+//! Module for validating a user's JWT
 //!
 use postgres_native_tls::MakeTlsConnector;
 

@@ -1,4 +1,4 @@
-//! Create a user's JWT token
+//! Create a user's JWT
 //!
 use postgres_native_tls::MakeTlsConnector;
 
