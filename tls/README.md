@@ -9,19 +9,13 @@ To generate tls assets with these tools, please install:
 
 ### Create
 
-#### Security Warning
-
-It is recommended that you recreate your own Certificate Authority (CA) certificate and private key. To do this please delete the included ones in the repo for ensuring your CA is unique:
-
-```bash
-rm -f ./ca/ca-key.pem ./ca/ca.pem ./ca/ca.csr
-```
-
-To create new tls assets including a new CA run:
+To create new tls assets including a new private Certificate Authority (CA) run:
 
 ```bash
 ./create-tls-assets.sh
 ```
+
+Note: Each time you run ``create-tls-assets.sh`` it will not recreate the CA pem or private key file. Instead it will reuse the existing CA to create new tls assets.
 
 ### Deploy
 
@@ -30,7 +24,7 @@ Deployment requires you have a running kubernetes cluster with ``kubectl`` insta
 Deploy into kubernetes with:
 
 ```bash
-./deploy-tls-assets.sh
+./deploy-tls-assets.sh -e dev
 ```
 
 #### Verify API TLS Assets

@@ -31,8 +31,6 @@ function usage() {
     echo ""
     echo " -e - ENV NAMESPACE - e.g. <default|dev|qa|test|uat|prod> (default: ${ENV_NAME})"
     echo ""
-    yellow "inspect certs with commands:"
-    echo -e "\nview p12 contents:\n  openssl pkcs12 -in ./api/server-keystore.p12 -passin pass:PASSWORD -passout pass:PASSWORD | openssl x509 -text\n"
 }
 
 while getopts ":e:h" o; do

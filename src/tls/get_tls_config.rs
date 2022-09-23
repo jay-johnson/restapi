@@ -82,7 +82,7 @@ pub async fn get_tls_config(
         conn_type = "client";
     }
     let tls_dir = std::env::var(format!("{uppercase_app_name}_TLS_DIR"))
-        .unwrap_or_else(|_| format!("./tls"));
+        .unwrap_or_else(|_| "./tls".to_string());
     let tls_ca = std::env::var(format!("{uppercase_app_name}_TLS_CA"))
         .unwrap_or_else(|_| format!("{tls_dir}/ca/ca.pem"));
     let tls_key = std::env::var(format!("{uppercase_app_name}_TLS_KEY"))

@@ -27,7 +27,7 @@ tls-postgres-peer
 tls-postgres-server
 ```
 
-If you do not see something similar for your kubernetes namespace, please make sure to run the ``deploy-jwt-and-tls-assets.sh`` from the root of the repo with the ``-e default`` flag:
+If you do not see something similar for your kubernetes namespace, please make sure to run the ``deploy-jwt-and-tls-assets.sh`` from the root of the repo with the ``-e dev`` flag:
 
 https://github.com/jay-johnson/restapi/blob/main/deploy-jwt-and-tls-assets.sh
 
