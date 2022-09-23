@@ -14,7 +14,8 @@ use crate::tls::tls_config::TlsConfig;
 /// and commonly-accessed statics (password salt,
 /// jwt encoding/decoding keys, tls configurations
 /// using [`TlsConfig`](crate::tls::tls_config::TlsConfig)
-/// for the api and postgres threadpools).
+/// for the api, kafka publishable events flag,
+/// and postgres endpoint and credentials).
 ///
 /// # Supported Environment Variables
 ///

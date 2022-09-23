@@ -1,5 +1,5 @@
 //! The CoreServices struct implements the hyper trait:
-//! [Service<Request<Body>>](https://docs.rs/hyper/latest/hyper/service/trait.Service.html#)
+//! https://docs.rs/hyper/latest/hyper/service/trait.Service.html#
 //! for serving HTTP traffic with a customized struct containing:
 //! - the static server configuration (``config`` member)
 //! - the bb8 postgres db threadpool (``db_pool`` member)
@@ -38,7 +38,9 @@ use crate::tls::tls_info::TlsInfo;
 /// with the
 /// [`CoreConfig`](crate::core::core_config::CoreConfig)
 /// server statics,
-/// tls information, and postgres client db threadpool
+/// tls information, kafka threadpool
+/// [`KafkaPublisher`](kafka_threadpool::kafka_publisher::KafkaPublisher),
+/// and postgres client db threadpool
 /// ([`Pool`](bb8::Pool))
 ///
 /// ## Core Config

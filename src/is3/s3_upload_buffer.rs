@@ -16,14 +16,14 @@ use rusoto_s3::S3;
 
 /// s3_upload_buffer
 ///
-/// An async upload an in-memory buffer (`&[u8]`)
-/// using an `futures`, `multipart_upload` to s3
+/// An async upload an in-memory buffer (``&[u8]``)
+/// using an ``futures``, ``multipart_upload`` to s3
 ///
-/// This works by chunking the `bytes` buffer (type: `&[u8]`) into
+/// This works by chunking the ``bytes`` buffer (type: ``&[u8]``) into
 /// many smaller chunks (6,000,000 bytes per chunk).
 /// after creating the chunks, each one is loaded into a list of
-/// `multipart` `futures` that are processed asynchronously.
-/// Once the `futures` are done, the file is done uploading to s3.
+/// ``multipart`` ``futures`` that are processed asynchronously.
+/// Once the ``futures`` are done, the file is done uploading to s3.
 ///
 /// # Usage
 ///

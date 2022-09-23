@@ -1,5 +1,4 @@
-//! Upload a local file to s3 using the function:
-//! ``s3_upload_file()``
+//! Upload a local file to s3
 //!
 use std::io::Read;
 use std::sync::Arc;
@@ -19,13 +18,13 @@ use rusoto_s3::S3;
 
 /// s3_upload_file
 ///
-/// An async upload a local file on disk (`&str`)
-/// using an `futures`, `multipart_upload` to s3
+/// An async upload a local file on disk (``&str``)
+/// using an ``futures``, ``multipart_upload`` to s3
 ///
 /// This works by reading the file into memory, then creating
 /// many smaller chunks (6,000,000 bytes per chunk).
 /// After creating the chunks, each one is loaded into a list of
-/// `multipart` `futures` that are processed asynchronously
+/// ``multipart`` ``futures`` that are processed asynchronously
 ///
 /// # Usage
 ///
@@ -48,20 +47,15 @@ use rusoto_s3::S3;
 ///
 /// # Returns
 ///
-/// Ok(success_msg: `String`)
+/// Ok(success_msg: ``String``)
 ///
 /// # Errors
 ///
-/// `String` error messages can be returned for many reasons
+/// ``String`` error messages can be returned for many reasons
 /// (connectivity, aws credentials, mfa timeouts, etc.)
 ///
-/// Err(err_msg: `String`)
+/// Err(err_msg: ``String``)
 ///
-/// # Examples
-///
-/// ```
-/// [TODO:example]
-/// ```
 pub async fn s3_upload_file(
     file_path: &str,
     bucket: &str,

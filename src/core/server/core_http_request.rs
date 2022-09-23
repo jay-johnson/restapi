@@ -48,7 +48,7 @@ use crate::tls::tls_info::TlsInfo;
 /// the ``kafka_pool`` allows for each HTTP request to
 /// publish messages to the configured kafka cluster.
 /// Please see the
-/// [kafka_threadpool docs]https://docs.rs/kafka-threadpool/latest/kafka_threadpool/)
+/// [kafka_threadpool docs](https://docs.rs/kafka-threadpool/latest/kafka_threadpool/)
 /// for more information on how to configure the
 /// kafka publisher threadpool.
 ///

@@ -1,5 +1,5 @@
 //! Download a file from s3 and store the contents
-//! in a buffer (``Vec<u8``) with the
+//! in a buffer (``Vec<u8>``) with the
 //! ``s3_download_to_memory()`` function
 //!
 use rusoto_core::Region;
@@ -11,7 +11,7 @@ use tokio::io::AsyncReadExt;
 
 /// s3_download_to_memory
 ///
-/// download an s3 key and return it as `Vec[u8]`
+/// download an s3 key and return it as ``Vec[u8]``
 ///
 /// credit to source:
 /// <https://github.com/rusoto/rusoto/blob/master/integration_tests/tests/s3.rs#L903-L920>
@@ -23,14 +23,14 @@ use tokio::io::AsyncReadExt;
 ///
 /// # Returns
 ///
-/// Ok(`Vec<u8>`)
+/// Ok(``Vec<u8>``)
 ///
 /// # Errors
 ///
-/// `String` error messages can be returned for many reasons
+/// ``String`` error messages can be returned for many reasons
 /// (connectivity, aws credentials, mfa timeouts, etc.)
 ///
-/// Err(err_msg: `String`)
+/// Err(err_msg: ``String``)
 ///
 pub async fn s3_download_to_memory(
     bucket: &str,

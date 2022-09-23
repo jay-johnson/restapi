@@ -16,14 +16,14 @@ use std::fs;
 ///
 /// # Returns
 ///
-/// Ok(file_path: `String`)
+/// Ok(file_path: ``String``)
 ///
 /// # Errors
 ///
-/// `String` error messages can be returned for many reasons
+/// ``String`` error messages can be returned for many reasons
 /// (connectivity, aws credentials, mfa timeouts, etc.)
 ///
-/// Err(err_msg: `String`)
+/// Err(err_msg: ``String``)
 ///
 pub async fn s3_download_to_file(
     file_path: &str,
