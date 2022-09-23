@@ -1,9 +1,9 @@
-FROM docker.io/rust:1.64
+FROM docker.io/rust:1.64.0
 
 RUN apt-get update \
     && echo "installing openssl dependencies for tls encryption" \
     && apt-get install -y pkg-config \
-    && apt-get install -y libssl-dev \
+    && apt-get install -y zlib1g cmake libssl-dev libsasl2-dev libzstd-dev \
     && apt-get install -y openssl \
     && echo "installing debugging tools" \
     && apt-get install -y \
