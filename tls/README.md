@@ -32,13 +32,13 @@ Deploy into kubernetes with:
 ##### Cert
 
 ```bash
-kubectl get secret -n default -o yaml tls-api-server | grep api-crt.pem | awk '{print $2}' | base64 -d | openssl x509 -text
+kubectl get secret -n dev -o yaml tls-api-server | grep api-crt.pem | awk '{print $2}' | base64 -d | openssl x509 -text
 ```
 
 ##### CA
 
 ```bash
-kubectl get secret -n default -o yaml tls-api-server | grep api-ca.pem | awk '{print $2}' | base64 -d | openssl x509 -text
+kubectl get secret -n dev -o yaml tls-api-server | grep api-ca.pem | awk '{print $2}' | base64 -d | openssl x509 -text
 ```
 
 #### Verify Kafka TLS Assets
@@ -46,11 +46,11 @@ kubectl get secret -n default -o yaml tls-api-server | grep api-ca.pem | awk '{p
 ##### Cert
 
 ```bash
-kubectl get secret -n default -o yaml tls-kafka-cluster-0-server | grep kafka-cluster-0-crt.pem | awk '{print $2}' | base64 -d | openssl x509 -text
+kubectl get secret -n dev -o yaml tls-kafka-cluster-0-server | grep kafka-cluster-0-crt.pem | awk '{print $2}' | base64 -d | openssl x509 -text
 ```
 
 ##### CA
 
 ```bash
-kubectl get secret -n default -o yaml tls-kafka-cluster-0-server | grep kafka-cluster-0-ca.pem | awk '{print $2}' | base64 -d | openssl x509 -text
+kubectl get secret -n dev -o yaml tls-kafka-cluster-0-server | grep kafka-cluster-0-ca.pem | awk '{print $2}' | base64 -d | openssl x509 -text
 ```
