@@ -17,7 +17,6 @@ services:
     volumes:
     - ../../tls/ca/ca.pem:/certs/tls/ca/ca.pem:ro
     - ../../tls/postgres:/certs/tls/postgres:ro
-    # - pgdata:/var/lib/postgresql/data
     - ./data-postgres/data:/var/lib/postgresql/data
     - ./etc/localtime_us_eastern:/etc/localtime
     - ./etc/timezone_us_eastern:/etc/timezone
@@ -65,7 +64,6 @@ services:
     ports:
     - "5433:443"
     volumes:
-    # requires running as due to the sessions ACL errors
     # https://github.com/helm/charts/issues/19690
     # https://stackoverflow.com/questions/64781245/permission-denied-var-lib-pgadmin-sessions-in-docker
     # user: root
@@ -74,9 +72,6 @@ services:
     - ./pgadmin/db-config.json:/db-config.json
     - ./etc/localtime_us_eastern:/etc/localtime
     - ./etc/timezone_us_eastern:/etc/timezone
-    # requires building the certs locally with:
-    # ./docker/db/build-postgres.sh
-    #
     # pgadmin tls assets
     - ../../tls/pgadmin/server-key.pem:/certs/server.key:ro
     - ../../tls/pgadmin/server.pem:/certs/server.cert:ro
