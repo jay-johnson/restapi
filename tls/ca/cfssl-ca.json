@@ -1,0 +1,77 @@
+{
+  "CN": "Example CA",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "NA",
+      "O": "NA",
+      "OU": "NA",
+      "ST": "NA"
+    }
+  ],
+  "signing": {
+    "default": {
+      "expiry": "8760h"
+    },
+    "profiles": {
+      "intermediate_ca": {
+        "usages": [
+          "signing",
+          "digital signature",
+          "key encipherment",
+          "cert sign",
+          "crl sign",
+          "server auth",
+          "client auth"
+        ],
+        "expiry": "8760h",
+        "ca_constraint": {
+          "is_ca": true,
+          "max_path_len": 0,
+          "max_path_len_zero": true
+        }
+      },
+      "peer": {
+        "usages": [
+          "signing",
+          "digital signature",
+          "key encipherment",
+          "client auth",
+          "server auth"
+        ],
+        "expiry": "8760h"
+      },
+      "server": {
+        "usages": [
+          "signing",
+          "digital signing",
+          "key encipherment",
+          "server auth"
+        ],
+        "expiry": "8760h"
+      },
+      "client": {
+        "usages": [
+          "signing",
+          "digital signature",
+          "key encipherment",
+          "client auth"
+        ],
+        "expiry": "8760h"
+      }
+    }
+  },
+  "hosts": [
+    "*.redten.io",
+    "*.example.com",
+    "*.local",
+    "*.svc.cluster.local",
+    "localhost",
+    "0.0.0.0",
+    "127.0.0.1"
+  ]
+}

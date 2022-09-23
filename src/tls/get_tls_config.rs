@@ -77,14 +77,20 @@ pub async fn get_tls_config(
     mode: &str,
 ) -> Result<TlsConfig, String> {
     let uppercase_app_name = app_name.to_uppercase();
+    let mut conn_type = "server";
+    if app_name.to_lowercase() == "postgres" {
+        conn_type = "client";
+    }
     let tls_dir = std::env::var(format!("{uppercase_app_name}_TLS_DIR"))
-        .unwrap_or_else(|_| format!("./certs/tls/{app_name}"));
+        .unwrap_or_else(|_| format!("./tls"));
     let tls_ca = std::env::var(format!("{uppercase_app_name}_TLS_CA"))
-        .unwrap_or_else(|_| format!("{tls_dir}/{app_name}-ca.pem"));
+        .unwrap_or_else(|_| format!("{tls_dir}/ca/ca.pem"));
     let tls_key = std::env::var(format!("{uppercase_app_name}_TLS_KEY"))
-        .unwrap_or_else(|_| format!("{tls_dir}/{app_name}.key"));
+        .unwrap_or_else(|_| {
+            format!("{tls_dir}/{app_name}/{conn_type}-key.pem")
+        });
     let tls_cert = std::env::var(format!("{uppercase_app_name}_TLS_CERT"))
-        .unwrap_or_else(|_| format!("{tls_dir}/{app_name}.crt"));
+        .unwrap_or_else(|_| format!("{tls_dir}/{app_name}/{conn_type}.pem"));
 
     let mut tls_enabled = false;
     if !&tls_ca.is_empty() && !&tls_key.is_empty() && !&tls_cert.is_empty() {

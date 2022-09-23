@@ -7,7 +7,7 @@ use kafka_threadpool::kafka_publisher::KafkaPublisher;
 /// publish_msg
 ///
 /// Wrapper for
-/// [`kafka_threadpool::kafka_publisher::KafkaPublisher::add_data_msg()`](kafka_threadpool::kafka_publisher::KafkaPublisher)
+/// [`kafka_threadpool::kafka_publisher::KafkaPublisher::add_data_msg()`](kafka_threadpool::kafka_publisher::KafkaPublisher::add_data_msg)
 /// that will only publish to kafka if the environment variable ``KAFKA_ENABLED`` is ``true`` or ``1``
 ///
 /// # Arguments

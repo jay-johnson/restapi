@@ -10,7 +10,7 @@ service:
 env:
   # kube resources are prefixed with this name value
   # secrets in the namespace use this same convention
-  name: dev 
+  name: dev
   app:
     name: api
     host: 0.0.0.0
@@ -29,7 +29,8 @@ env:
     replicas: 1
     log:
       name: rust-restapi
-      level: info
+      # using RUST_LOG=<level>
+      level: info,kafka_threadpool=info
       # enable rust backtraces with "1"
       backtrace: "0"
       # set to "1" to enable debug
@@ -68,3 +69,10 @@ env:
       storage_class: STANDARD
       # disable s3 uploads by setting to "1"
       uploads_disabled: "0"
+  kafka:
+    # disabled by default
+    enabled: false
+    brokers: host1:port,host2:port,host3:port
+    num_threads: 5
+    publish_events_enabled: true
+    log_label: ktp

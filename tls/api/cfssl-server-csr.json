@@ -1,0 +1,22 @@
+{
+  "CN": "api",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",
+      "O": "api"
+    }
+  ],
+  "hosts": [
+    "*.redten.io",
+    "*.example.com",
+    "*.local",
+    "*.svc.cluster.local",
+    "localhost",
+    "0.0.0.0",
+    "127.0.0.1"
+  ]
+}

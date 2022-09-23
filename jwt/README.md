@@ -1,6 +1,6 @@
 ## How to build JWT private and public keys for the jsonwebtokens crate
 
-The default algorithm the jsonwebtokens crate is using is ``ECDSA`` with ``SHA-256``.
+The default algorithm the [jsonwebtoken crate](https://crates.io/crates/jsonwebtoken) is using is ``ECDSA`` with ``SHA-256``.
 
 ### Generate new ECDSA with SHA-256 public and private signing keys
 

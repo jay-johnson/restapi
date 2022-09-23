@@ -35,7 +35,7 @@
 //!
 //! ### TLS Encryption
 //!
-//! - Includes a tls asset generator tool ([./certs/generate-tls-assets.sh](https://github.com/jay-johnson/restapi/blob/main/certs/generate-tls-assets.sh)) for building self-signed tls assets (requires docker).
+//! - Includes a tls asset generator tool ([./tls/create-tls-assets.sh](https://github.com/jay-johnson/restapi/blob/main/tls/create-tls-assets.sh)) for building self-signed tls assets including your own private Certificate Authority (CA).
 //!
 //! #### Ingress
 //!
@@ -54,41 +54,33 @@
 //! cd restapi
 //! ```
 //!
-//! ### Generate TLS Assets
+//! ### Generate TLS Assets and a Private Certificate Authority (CA) using CFSSL
 //!
-//! The repository [restapi](https://github.com/jay-johnson/restapi) includes default tls assets, but for security purposes you should generate your own. Please refer to the [Generate TLS Assets doc](./certs/README.md) for more information.
-//!
-//! Here's how to generate them under the ``./certs`` directory:
+//! Generate new tls assets under the ``./tls`` directory with these commands:
 //!
 //! ```bash
-//! cd certs
-//! ./generate-tls-assets.sh -f -c ./configs/dev-network.yml
+//! cd tls
+//! ./create-tls-assets.sh
 //! cd ..
 //! ```
 //!
-//! <a href="https://asciinema.org/a/473131?autoplay=1" width="600" height="400" target="_blank"><img src="https://asciinema.org/a/473131.png"/></a>
+//! Please refer to the [Generating TLS Assets with CFSSL](./tls/README.md) for more information.
 //!
-//! ### Generate JWT Keys
+//! ### Generate JWT Private and Public Signing Keys
 //!
-//! This repo includes default JWT signing keys, but you should generate your own signing keys under the ``./jwt`` directory with these commands:
+//! Generate new signing JWT keys under the ``./jwt`` directory with these commands:
 //!
 //! ```bash
 //! cd jwt
-//! openssl ecparam -name prime256v1 -genkey -out private-key.pem
-//! openssl pkcs8 -topk8 -nocrypt -in private-key.pem -out private-key-pkcs8.pem
-//! openssl ec -in private-key.pem -pubout -out public-key.pem
+//! ./recreate-jwt.sh
 //! cd ..
 //! ```
 //!
-//! <a href="https://asciinema.org/a/473132?autoplay=1" width="600" height="400" target="_blank"><img src="https://asciinema.org/a/473132.png"/></a>
+//! Please refer to the [How to build JWT private and public keys for the jsonwebtokens crate doc](./jwt/README.md) for more information.
 //!
-//! Please refer to the [How to build JWT private and public keys for the jsonwebtokens crate doc](./certs/README.md) for more information.
-//!
-//! ### Build the Postgres docker image
+//! ### Deploy Postgres and pgAdmin using Podman
 //!
 //! Please refer to the [Build and Deploy a Secured Postgres backend doc](./docker/db/README.md) for more information.
-//!
-//! <a href="https://asciinema.org/a/473134?autoplay=1" width="600" height="400" target="_blank"><img src="https://asciinema.org/a/473134.png"/></a>
 //!
 //! ### Build API Server
 //!
@@ -111,10 +103,10 @@
 //! SERVER_NAME_API       | api
 //! SERVER_NAME_LABEL     | rust-restapi
 //! API_ENDPOINT          | 0.0.0.0:3000
-//! API_TLS_DIR           | ./certs/tls/api
-//! API_TLS_CA            | ./certs/tls/api/api-ca.pem
-//! API_TLS_CERT          | ./certs/tls/api/api.crt
-//! API_TLS_KEY           | ./certs/tls/api/api.key
+//! API_TLS_DIR           | ./tls/api
+//! API_TLS_CA            | ./tls/ca/ca.pem
+//! API_TLS_CERT          | ./tls/api/server.pem
+//! API_TLS_KEY           | ./tls/api/server-key.pem
 //!
 //! ### User Email Verification
 //!
@@ -138,10 +130,10 @@
 //! POSTGRES_USERNAME     | datawriter
 //! POSTGRES_PASSWORD     | "123321"
 //! POSTGRES_ENDPOINT     | 0.0.0.0:5432
-//! POSTGRES_TLS_DIR      | ./certs/tls/postgres
-//! POSTGRES_TLS_CA       | ./certs/tls/postgres/postgres-ca.pem
-//! POSTGRES_TLS_CERT     | ./certs/tls/postgres/postgres.crt
-//! POSTGRES_TLS_KEY      | ./certs/tls/postgres/postgres.key
+//! POSTGRES_TLS_DIR      | ./tls/postgres
+//! POSTGRES_TLS_CA       | ./tls/ca/ca.pem
+//! POSTGRES_TLS_CERT     | ./tls/postgres/client.pem
+//! POSTGRES_TLS_KEY      | ./tls/postgres/client-key.pem
 //! POSTGRES_DB_CONN_TYPE | postgresql
 //!
 //! ### Kafka Cluster
@@ -158,9 +150,9 @@
 //! KAFKA_PUBLISH_RETRY_INTERVAL_SEC | number of seconds to sleep before each publish retry
 //! KAFKA_PUBLISH_IDLE_INTERVAL_SEC  | number of seconds to sleep if there are no message to process
 //! KAFKA_NUM_THREADS                | number of threads for the threadpool
-//! KAFKA_TLS_CLIENT_KEY             | optional - path to the kafka mTLS key
-//! KAFKA_TLS_CLIENT_CERT            | optional - path to the kafka mTLS certificate
-//! KAFKA_TLS_CLIENT_CA              | optional - path to the kafka mTLS certificate authority (CA)
+//! KAFKA_TLS_CLIENT_KEY             | optional - path to the kafka mTLS key (./tls/kafka-cluster-0/client-key.pem)
+//! KAFKA_TLS_CLIENT_CERT            | optional - path to the kafka mTLS certificate (./tls/kafka-cluster-0/client.pem)
+//! KAFKA_TLS_CLIENT_CA              | optional - path to the kafka mTLS certificate authority (CA) (./tls/ca/ca.pem)
 //! KAFKA_METADATA_COUNT_MSG_OFFSETS | optional - set to anything but ``true`` to bypass counting the offsets
 //!
 //! #### Sample kafka.env file
@@ -173,9 +165,9 @@
 //! export KAFKA_TOPICS="testing"
 //! export KAFKA_PUBLISH_RETRY_INTERVAL_SEC="1.0"
 //! export KAFKA_NUM_THREADS="5"
-//! export KAFKA_TLS_CLIENT_CA="PATH_TO_TLS_CA_FILE"
-//! export KAFKA_TLS_CLIENT_CERT="PATH_TO_TLS_CERT_FILE"
-//! export KAFKA_TLS_CLIENT_KEY="PATH_TO_TLS_KEY_FILE"
+//! export KAFKA_TLS_CLIENT_CA="./tls/ca/ca.pem"
+//! export KAFKA_TLS_CLIENT_CERT="./tls/kafka-cluster-0/client.pem"
+//! export KAFKA_TLS_CLIENT_KEY="./tls/kafka-cluster-0/client-key.pem"
 //! # the KafkaPublisher can count the offsets for each topic with "true" or "1"
 //! export KAFKA_METADATA_COUNT_MSG_OFFSETS="true"
 //! ```
@@ -218,7 +210,7 @@
 //!
 //! ### Build Base Image
 //!
-//! This will build an initial base image inside a docker container. Note: this base image will **not** work on a different cpu chipset because the openssl libraries are compiled within the image for this base image.
+//! This will build an initial base image using podman. Note: this base image will **not** work on a different cpu chipset because the openssl libraries are compiled within the image for this base image.
 //!
 //! ```bash
 //! ./build-base.sh
@@ -234,29 +226,37 @@
 //!
 //! ## Kubernetes
 //!
-//! ### Helm Chart
+//! ### Start Kafka
 //!
-//! Please refer to the [Deploying the Rust Rest API helm chart into kubernetes guide](https://github.com/jay-johnson/restapi/blob/main/charts) for deploying the example helm chart into a kubernetes cluster.
+//! If you do not have a running Kafka cluster, you can deploy your own with:
+//!
+//! https://github.com/jay-johnson/rust-with-strimzi-kafka-and-tls
+//!
+//! ### Helm Chart
 //!
 //! #### Deploy TLS Assets into Kubernetes
 //!
+//! This command will deploy all jwt keys, tls assets and credentials into the ``dev`` namespace:
+//!
 //! ```bash
-//! ./deploy-tls-assets.sh
+//! ./deploy-kubernetes-assets.sh -e dev
 //! ```
 //!
 //! #### Deploy the Rust Rest API into Kubernetes
 //!
-//! By default this uses ``jayjohnson/rust-restapi`` image by default
+//! Please refer to the [Deploying the Rust Rest API helm chart into kubernetes guide](https://github.com/jay-johnson/restapi/blob/main/charts/rust-restapi/README.md) for deploying the example helm chart into a kubernetes cluster.
+//!
+//! By default this uses the ``jayjohnson/rust-restapi`` container image
 //!
 //! ```bash
-//! helm install -n default rust-restapi ./charts/rust-restapi
+//! helm upgrade --install -n dev dev-api ./charts/rust-restapi -f ./charts/rust-restapi/values.yaml
 //! ```
 //!
 //! ## Monitoring
 //!
 //! ### Prometheus
 //!
-//! This section assumes you have a working prometheus instance already running inside kubernetes. Below is the Prometheus ``scrape_config`` to monitor the rest api deployment replica(s) within kubernetes. Note this config also assumes the api chart is running in the ``default`` namespace:
+//! This section assumes you have a working prometheus instance already running inside kubernetes. Below is the Prometheus ``scrape_config`` to monitor the rest api deployment replica(s) within kubernetes. Note this config also assumes the api chart is running in the ``dev`` namespace:
 //!
 //! ```yaml
 //! scrape_configs:
@@ -269,7 +269,7 @@
 //!     insecure_skip_verify: true
 //!   static_configs:
 //!   - targets:
-//!     - rust-restapi.default.svc.cluster.local:3000
+//!     - dev-api.dev.svc.cluster.local:3000
 //! ```
 //!
 //! ## Supported APIs

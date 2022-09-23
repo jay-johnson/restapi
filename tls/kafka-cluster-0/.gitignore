@@ -1,0 +1,10 @@
+*.pem
+*.csr
+*.pkcs8
+*.pkcs12
+*.p12
+*.crt
+*.key
+*.ca
+*-password.txt
+*.jks

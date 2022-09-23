@@ -1,41 +1,15 @@
-## Build and Deploy a Secured Postgres Backend
+## Start the Postgres Database with TLS for Encryption in Transit and pgAdmin4 with Podman
 
-### Build your own tls assets
-
-Please refer to the [Generate TLS Assets - README.md guide](../../certs/README.md)
-
-If you have not generated the certs locally, then you can run this one-line command:
-
-```bash
-cd ../../certs && ./generate-tls-assets.sh -c ./configs/dev-network.yml -f && cd ..
-```
-
-### Build the Postgres image
-
-Please note: the [Postgres Dockerfile](./postgres/Dockerfile) will copy the tls assets from the ``../../certs/tls`` into a image named: ``localbuild/postgres14``
-
-<a href="https://asciinema.org/a/473134?autoplay=1" width="600" height="400" target="_blank"><img src="https://asciinema.org/a/473134.png"/></a>
-
-```bash
-cd ./docker/db
-./build-postgres.sh
-```
-
-### Start
-
-Before starting the stack, please note this command will start 2 docker images:
-
-- `localbuild/postgres14` - built from open source [postgres:14.1-alpine](https://hub.docker.com/_/postgres?tab=tags&page=1&name=14.1) image)
-- [dpage/pgadmin4](https://hub.docker.com/r/dpage/pgadmin4/) - useful db management web app, but please do not allow access to this docker container access to the public internet - it is not intended to be secure enough for internet traffic
+This approach requires [podman](https://podman.io/getting-started/installation) and [podman-compose](https://github.com/containers/podman-compose):
 
 ```bash
 ./start.sh
 ```
 
-### Verify docker containers are running
+### Verify Containers are Running
 
 ```bash
-docker ps
+podman ps -a
 ```
 
 ### Verify connectivity
@@ -74,13 +48,7 @@ Default login credentials which you can change in the [compose.yml](./compose.ym
 
 ### Initialize the db schema
 
-The default password is ``postgres``, and you can change it in the [compose.yml](./compose.yml) under the ``environment`` variables list:
-
-- ``POSTGRES_USER``
-- ``POSTGRES_PASSWORD``
-- ``PGADMIN_DEFAULT_PASSWORD``
-
-<a href="https://asciinema.org/a/473135?autoplay=1" width="600" height="400" target="_blank"><img src="https://asciinema.org/a/473135.png"/></a>
+The default password is ``postgres``, and you can change it in the [env/postgres.env](./env/postgres.env) file.
 
 ```bash
 ./init-db.sh
