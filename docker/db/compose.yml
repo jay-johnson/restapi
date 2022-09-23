@@ -75,7 +75,7 @@ services:
     # pgadmin tls assets
     - ../../tls/pgadmin/server-key.pem:/certs/server.key:ro
     - ../../tls/pgadmin/server.pem:/certs/server.cert:ro
-    # db tls assets for v1 - not a valid client key/cert
+    # db tls assets
     - ../../tls/postgres/client-key.pem:/etc/tls/postgres.key:ro
     - ../../tls/postgres/client.pem:/etc/tls/postgres.crt:ro
     - ../../tls/ca/ca.pem:/etc/tls/postgres-ca.pem:ro
