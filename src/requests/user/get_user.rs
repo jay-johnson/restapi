@@ -227,7 +227,7 @@ pub async fn get_user(
                     // optional headers stored in: Option<HashMap<String, String>>
                     None,
                     // payload in the message
-                    &format!("USER_CREATE user={user_id}"),
+                    &format!("USER_GET user={user_id}"),
                 )
                 .await;
             }
