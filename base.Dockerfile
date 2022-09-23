@@ -15,10 +15,10 @@ RUN apt-get update \
 
 ADD ./Cargo.toml /server/Cargo.toml
 ADD ./Cargo.lock /server/Cargo.lock
-ADD ./certs /server/certs
 ADD ./jwt /server/jwt
 ADD ./src /server/src
 ADD ./tests /server/tests
+ADD ./tls /server/certs/tls
 ADD ./examples /server/examples
 
 # add custom user here in future version
