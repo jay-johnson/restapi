@@ -1,4 +1,4 @@
-//! # JWT functions for creation and valiation
+//! # JWT functions for creation and validation
 //!
 //! Newly-created tokens are signed with the
 //! private jwt key
@@ -138,25 +138,17 @@ pub async fn validate_token(
     uid: &str,
     decoding_key_bytes: &[u8],
 ) -> Result<TokenData<TokenClaim>, String> {
-    let verbose = false;
     let label = tracking_label.to_string();
 
-    // 1. prep to validate the token
-    let token_to_validate = Validation {
-        sub: Some(uid.to_string()),
-        ..Validation::new(Algorithm::ES256)
-    };
+    // set up token validation
+    // https://github.com/Keats/jsonwebtoken/blob/master/examples/validation.rs
+    let mut validation = Validation::new(Algorithm::ES256);
+    validation.sub = Some(uid.to_string());
 
-    if verbose {
-        trace!(
-            "{label} - \
-            token={token}"
-        );
-    }
     let token_data = match decode::<TokenClaim>(
         token,
         &DecodingKey::from_ec_pem(decoding_key_bytes).unwrap(),
-        &token_to_validate,
+        &validation,
     ) {
         Ok(c) => c,
         Err(err) => match *err.kind() {

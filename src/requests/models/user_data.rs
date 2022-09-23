@@ -1,4 +1,4 @@
-//! Model tracking user uploaded s3 keys
+//! Model for tracking user-uploaded s3 keys
 //!
 use serde::Deserialize;
 use serde::Serialize;

@@ -1,9 +1,9 @@
 //! Static server configuration stored in the
 //! [`struct CoreConfig`](crate::core::core_config::CoreConfig)
 //! that contains all connectivity endpoints,
-//! tls asset paths, api tls configuration,
-//! jwt keys, user password salt, is kafka
-//! publishing enabled, and postgres db credentials
+//! tls asset paths, api tls configuration, is kafka
+//! publishing enabled, jwt keys, user password salt,
+//! and postgres db credentials
 //!
 use crate::tls::get_tls_config::get_tls_config;
 use crate::tls::tls_config::TlsConfig;

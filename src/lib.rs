@@ -1,8 +1,16 @@
-//! # Rust Rest API Stack with User Management, Kafka Message Publishing and Prometheus for Monitoring
+//! # Rust Rest API Stack with User Management, Kafka Message Publishing, S3 uploads/downloads, and Prometheus for Monitoring
 //!
-//! A secure-by-default, async Rest API implemented with hyper, tokio, bb8, kafka_threadpool and postgres with prometheus for monitoring. Includes: a working user management and authentication backend written for postgres, async s3 uploading for POST-ed data files (or from memory), async s3 downloading (to a local file or into memory), async publishing to a kafka cluster with client mtls authentication and encryption in transit, native support for publishing all successful user events to kafka, and one-off message publishing to a custom kafka topic.
+//! A secure-by-default Rest API using [hyper](https://crates.io/crates/hyper), [tokio](https://crates.io/crates/tokio), [bb8](https://crates.io/crates/bb8), [kafka-threadpool](https://crates.io/crates/kafka-threadpool), postgres, and [prometheus](https://crates.io/crates/prometheus) for monitoring.
 //!
-//! # Examples
+//! ## Features
+//!
+//! 1.  User management and authentication stored in postgres
+//! 1.  Async s3 uploading and downloading (to/from local files or to/from memory)
+//! 1.  Decoupled, async kafka threadpool that uses environment variables to connect to a kafka cluster with client mtls for authentication and encryption in transit
+//! 1.  Async publishing for all successful user events to a kafka topic (topic default: ``user.events``) and partition key (key default: ``user-{user.id}``)
+//! 1.  Async kafka messaging for one-off messages using custom kafka topic(s), partition key(s) and custom header(s).
+//!
+//! ## Examples
 //!
 //! Please see the [restapi/examples/server.rs](https://github.com/jay-johnson/restapi/blob/main/examples/server.rs) for developing your own rest api.
 //!
